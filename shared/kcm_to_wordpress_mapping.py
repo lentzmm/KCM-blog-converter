@@ -148,3 +148,59 @@ def get_default_tags():
     Returns default WordPress tags for general real estate content
     """
     return ['Real Estate Market']
+
+def parse_kcm_recommendations(text):
+    """
+    Parse category and tag recommendations from Claude's response
+
+    Args:
+        text: String containing category/tag recommendations
+
+    Returns:
+        dict with 'categories' and 'tags' lists
+    """
+    result = {'categories': [], 'tags': []}
+
+    # Simple parsing - look for lines with categories/tags
+    lines = text.split('\n')
+    current_section = None
+
+    for line in lines:
+        line = line.strip()
+        if 'categor' in line.lower():
+            current_section = 'categories'
+        elif 'tag' in line.lower():
+            current_section = 'tags'
+        elif line.startswith('-') or line.startswith('*'):
+            # Extract the item
+            item = line.lstrip('-*').strip()
+            if current_section and item:
+                result[current_section].append(item)
+
+    return result
+
+def merge_taxonomy(categories1, tags1, categories2=None, tags2=None):
+    """
+    Merge two sets of categories and tags, removing duplicates
+
+    Args:
+        categories1: List of category names
+        tags1: List of tag names
+        categories2: Optional second list of categories
+        tags2: Optional second list of tags
+
+    Returns:
+        dict with merged 'categories' and 'tags' lists
+    """
+    merged_categories = set(categories1 or [])
+    merged_tags = set(tags1 or [])
+
+    if categories2:
+        merged_categories.update(categories2)
+    if tags2:
+        merged_tags.update(tags2)
+
+    return {
+        'categories': list(merged_categories),
+        'tags': list(merged_tags)
+    }

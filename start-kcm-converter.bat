@@ -19,6 +19,31 @@ if errorlevel 1 (
     exit /b 1
 )
 
+echo Checking dependencies...
+REM Check if Flask is installed (indicator that dependencies are set up)
+python -c "import flask" >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo Dependencies not found. Installing required packages...
+    echo This may take a few minutes on first run...
+    echo.
+    cd /d "%~dp0"
+    pip install -r shared/requirements.txt
+    if errorlevel 1 (
+        echo.
+        echo ERROR: Failed to install dependencies
+        echo Please check your internet connection and try again
+        pause
+        exit /b 1
+    )
+    echo.
+    echo Dependencies installed successfully!
+    echo.
+    cd /d "%~dp0kcm-converter"
+) else (
+    echo Dependencies OK!
+)
+
 echo Starting Flask server...
 echo Server will run on http://localhost:5000
 echo.
