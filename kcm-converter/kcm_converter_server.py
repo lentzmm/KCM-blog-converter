@@ -781,16 +781,39 @@ def rewrite_blog_post(original_html: str, context_pages: List[Dict]) -> str:
 
     logger.info("Sending to Claude for rewriting...")
 
-    # Load refined prompt template (ACTIVE version)
+    # Load main prompt and all guide files
     prompt_path = Path(__file__).parent / 'kcm_prompt_ACTIVE.md'
+    writing_guide_path = Path(__file__).parent / 'writing_mechanics_guide.md'
+    seo_guide_path = Path(__file__).parent / 'seo_optimization_guide.md'
+    town_guide_path = Path(__file__).parent / 'town_naming_guide.md'
+    technical_guide_path = Path(__file__).parent / 'technical_requirements_guide.md'
 
     try:
+        # Load main prompt
         with open(prompt_path, 'r', encoding='utf-8') as f:
-            refined_prompt_template = f.read()
-        logger.info("Loaded refined prompt template: ACTIVE")
-    except FileNotFoundError:
-        logger.warning(f"Refined prompt template v4 not found at {prompt_path}, using fallback prompt")
-        refined_prompt_template = """# KCM to South Jersey Blog Conversion
+            main_prompt = f.read()
+        logger.info("Loaded main prompt: ACTIVE")
+
+        # Load guide files
+        with open(writing_guide_path, 'r', encoding='utf-8') as f:
+            writing_guide = f.read()
+        logger.info("Loaded writing mechanics guide")
+
+        with open(seo_guide_path, 'r', encoding='utf-8') as f:
+            seo_guide = f.read()
+        logger.info("Loaded SEO optimization guide")
+
+        with open(town_guide_path, 'r', encoding='utf-8') as f:
+            town_guide = f.read()
+        logger.info("Loaded town naming guide")
+
+        with open(technical_guide_path, 'r', encoding='utf-8') as f:
+            technical_guide = f.read()
+        logger.info("Loaded technical requirements guide")
+
+    except FileNotFoundError as e:
+        logger.warning(f"Guide file not found: {e}, using fallback prompt")
+        main_prompt = """# KCM to South Jersey Blog Conversion
 
 ## MISSION
 Convert national real estate content into South Jersey gold. Make readers stop scrolling. Drive action.
@@ -804,8 +827,33 @@ Convert national real estate content into South Jersey gold. Make readers stop s
 - Price range: $300K-$600K (adjust per town)
 
 OUTPUT: Return ONLY the rewritten HTML. No preamble, no code fences."""
+        writing_guide = ""
+        seo_guide = ""
+        town_guide = ""
+        technical_guide = ""
 
-    prompt = f"""{refined_prompt_template}
+    # Build the full prompt with all guides
+    prompt = f"""{main_prompt}
+
+---
+
+## WRITING MECHANICS GUIDE
+{writing_guide}
+
+---
+
+## SEO OPTIMIZATION GUIDE
+{seo_guide}
+
+---
+
+## TOWN NAMING GUIDE
+{town_guide}
+
+---
+
+## TECHNICAL REQUIREMENTS GUIDE
+{technical_guide}
 
 ---
 
@@ -819,9 +867,9 @@ OUTPUT: Return ONLY the rewritten HTML. No preamble, no code fences."""
 
 ---
 
-## CONVERSION INSTRUCTIONS
+## FINAL INSTRUCTIONS
 
-Apply ALL guidelines from the refined prompt above to convert this national content into localized South Jersey content.
+Apply ALL guidelines from the guides above to convert this national content into localized South Jersey content.
 
 **CRITICAL REMINDERS:**
 - Preserve ALL existing internal links exactly as they appear
