@@ -45,10 +45,32 @@ load_dotenv(dotenv_path=env_path)
 app = Flask(__name__)
 CORS(app)  # Enable CORS for local development
 
-# Initialize API clients
-notion_client = NotionClient(auth=os.getenv('NOTION_API_KEY'))
-claude_client = Anthropic(api_key=os.getenv('CLAUDE_API_KEY'))
+# Initialize API clients with validation
+claude_api_key = os.getenv('CLAUDE_API_KEY')
+notion_api_key = os.getenv('NOTION_API_KEY')
 database_id = os.getenv('NOTION_DATABASE_ID')
+
+# Check if API keys are configured (not empty and not placeholder values)
+def is_valid_api_key(key):
+    return key and key != '' and 'your_' not in key.lower() and '_here' not in key.lower()
+
+if not is_valid_api_key(claude_api_key):
+    logger.warning("⚠️  CLAUDE_API_KEY not configured. Please update shared/.env file")
+    claude_client = None
+else:
+    claude_client = Anthropic(api_key=claude_api_key)
+    logger.info("✓ Claude API client initialized")
+
+if not is_valid_api_key(notion_api_key):
+    logger.warning("⚠️  NOTION_API_KEY not configured. Please update shared/.env file")
+    notion_client = None
+else:
+    notion_client = NotionClient(auth=notion_api_key)
+    logger.info("✓ Notion API client initialized")
+
+if not is_valid_api_key(database_id):
+    logger.warning("⚠️  NOTION_DATABASE_ID not configured. Please update shared/.env file")
+    database_id = None
 
 # WordPress configuration
 WORDPRESS_SITE_URL = os.getenv('WORDPRESS_SITE_URL', 'https://mikesellsnj.com')
@@ -903,6 +925,19 @@ OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, no code fen
 def convert():
     """Main endpoint for blog conversion"""
     try:
+        # Check if API clients are configured
+        if not claude_client:
+            return jsonify({
+                'error': 'Claude API not configured',
+                'message': 'Please add your CLAUDE_API_KEY to shared/.env file'
+            }), 503
+
+        if not notion_client or not database_id:
+            return jsonify({
+                'error': 'Notion API not configured',
+                'message': 'Please add your NOTION_API_KEY and NOTION_DATABASE_ID to shared/.env file'
+            }), 503
+
         data = request.json
         original_html = data.get('html', '')
         kcm_tags_text = data.get('kcm_tags', '')
