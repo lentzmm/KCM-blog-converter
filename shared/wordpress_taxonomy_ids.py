@@ -134,3 +134,36 @@ def get_tag_name_by_id(tag_id):
         if t_id == tag_id:
             return name
     return None
+
+def build_webhook_payload(title, content, excerpt, categories, tags, featured_media_id=None, yoast_meta=None):
+    """
+    Build n8n webhook payload for WordPress post creation
+
+    Args:
+        title: Post title
+        content: Post HTML content
+        excerpt: Post excerpt
+        categories: List of category names
+        tags: List of tag names
+        featured_media_id: WordPress media ID for featured image
+        yoast_meta: Dict with Yoast SEO metadata
+
+    Returns:
+        Dict ready for n8n webhook POST
+    """
+    payload = {
+        'title': title,
+        'content': content,
+        'excerpt': excerpt,
+        'status': 'draft',
+        'categories': get_category_ids(categories),
+        'tags': get_tag_ids(tags),
+    }
+
+    if featured_media_id:
+        payload['featured_media'] = featured_media_id
+
+    if yoast_meta:
+        payload['yoast_meta'] = yoast_meta
+
+    return payload
