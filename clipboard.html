@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KCM Blog Converter - South Jersey</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        #paste {
+            width: 100%;
+            min-height: 200px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #fafafa;
+        }
+        #paste:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: white;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #0b7dda;
+        }
+        .btn-download {
+            background: #FF9800;
+            color: white;
+        }
+        .btn-download:hover {
+            background: #e68900;
+        }
+        .btn-retry {
+            background: #9C27B0;
+            color: white;
+        }
+        .btn-retry:hover {
+            background: #7B1FA2;
+        }
+        .btn-subtle {
+            background: #e0e0e0;
+            color: #666;
+            font-size: 12px;
+            padding: 8px 16px;
+        }
+        .btn-subtle:hover {
+            background: #d0d0d0;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        #status.loading {
+            display: block;
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        #status.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        #status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .output-container {
+            display: none;
+            margin-top: 30px;
+        }
+        .output-container.visible {
+            display: block;
+        }
+        #htmlOutput {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+        }
+        #preview {
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            background: white;
+            margin-top: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #666;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .manual-options {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+        .manual-options-title {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .action-buttons-group {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #2196F3;
+            margin-bottom: 20px;
+        }
+        .action-buttons-group .section-title {
+            color: #1976D2;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 KCM Blog Converter</h1>
+        <p class="subtitle">Convert KeepingCurrentMatters.com blogs to South Jersey localized content</p>
+
+        <div class="section">
+            <div class="section-title">Step 1: Paste Original HTML</div>
+            <div id="paste" contenteditable="true" placeholder="Paste your KCM blog HTML here...">
+Paste your KCM blog HTML here...
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Step 1B: KCM Recommended Categories/Tags (Optional)</div>
+            <div style="background:#fffbea; padding:15px; border-radius:4px; margin-bottom:10px; border:1px solid #f0e68c;">
+                <strong>💡 Pro Tip:</strong> Copy and paste the KCM recommended categories/tags from the bottom of the KCM blog post. These will be merged with AI-generated suggestions.
+            </div>
+            <div id="kcmTags" contenteditable="true" placeholder="Paste KCM categories/tags here (e.g., 'For BuyersFirst-Time BuyersMortgage Rates')..." style="min-height:60px; border:2px solid #ddd; border-radius:4px; padding:15px; font-size:14px; background:#fafafa;">
+Paste KCM categories/tags here...
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="button-group">
+                <button class="btn-primary" onclick="convertBlog()">🚀 Convert to South Jersey</button>
+            </div>
+            <div id="status"></div>
+        </div>
+
+        <div class="output-container" id="outputContainer">
+            <div class="section">
+                <div class="section-title">Step 2: SEO Metadata</div>
+                <div id="seoMetadata" style="background:#f8f9fa; padding:20px; border-radius:4px; border:2px solid #ddd;">
+                    <div style="margin-bottom:15px;">
+                        <strong>Title:</strong> <span id="articleTitle"></span>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <strong>Categories:</strong> <span id="seoCategories"></span>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <strong>Tags:</strong> <span id="seoTags"></span>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <strong>Focus Keyphrase:</strong> <span id="seoKeyphrase"></span>
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <strong>SEO Title:</strong> <span id="seoTitle"></span>
+                    </div>
+                    <div id="metaDescriptionContainer" style="margin-bottom:15px; display:none;">
+                        <strong>Meta Description:</strong> <span id="seoDescription"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="imagesSection" style="display:none;">
+                <div class="section-title">Step 3: Images</div>
+                <div id="imageList" style="overflow-x:auto; margin-bottom:15px;"></div>
+                <div id="imageProcessStatus" style="display:none; margin-top:10px; padding:15px; border-radius:4px;"></div>
+            </div>
+
+            <div class="action-buttons-group">
+                <div class="section-title">📤 Publish to WordPress</div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="processImages()" id="processImagesBtn">🖼️ Upload Images to WordPress</button>
+                    <button class="btn-primary" onclick="sendToWordPress()" id="sendToWPBtn">🚀 Send HTML to WordPress</button>
+                    <button class="btn-retry" onclick="retryWebhook()" id="retryWebhookBtn" style="display:none;">🔄 Retry Webhook</button>
+                </div>
+                <div id="wpStatus" style="display:none; margin-top:15px; padding:15px; border-radius:4px;"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Step 4: Converted HTML</div>
+                <textarea id="convertedHTML" style="width:100%; height:300px; margin-top:15px; font-family:monospace; padding:15px; border:2px solid #ddd; border-radius:4px;"></textarea>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Step 5: Preview</div>
+                <div id="preview"></div>
+            </div>
+
+            <div class="manual-options">
+                <div class="manual-options-title">Manual Options</div>
+                <div class="button-group">
+                    <button class="btn-subtle" onclick="showHTML()">View HTML Source</button>
+                    <button class="btn-subtle" onclick="downloadHTML()">Download HTML File</button>
+                    <button class="btn-subtle" onclick="copyToClipboard()">Copy HTML to Clipboard</button>
+                    <button class="btn-subtle" onclick="downloadImageCSV()">Download Image List (CSV)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store conversion results globally
+        let currentConversion = {
+            html: '',
+            seo: {},
+            images: [],
+            featured_image_id: null
+        };
+
+        function showHTML() {
+            const html = document.getElementById('paste').innerHTML;
+            const htmlOutput = document.getElementById('htmlOutput');
+
+            if (!htmlOutput) {
+                // Create a modal or section to show HTML
+                const section = document.createElement('div');
+                section.className = 'section';
+                section.innerHTML = `
+                    <div class="section-title">HTML Source</div>
+                    <textarea id="htmlOutput" style="width:100%; height:300px; border:2px solid #ddd; border-radius:4px; padding:15px; font-family:monospace; font-size:12px; background:#f8f9fa;"></textarea>
+                `;
+                document.querySelector('.manual-options').before(section);
+            }
+            document.getElementById('htmlOutput').value = html;
+            document.getElementById('htmlOutput').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function convertBlog() {
+            const paste = document.getElementById('paste');
+            const kcmTagsEl = document.getElementById('kcmTags');
+            const status = document.getElementById('status');
+            const convertBtn = event.target;
+
+            const originalHTML = paste.innerHTML;
+            let kcmTags = kcmTagsEl.innerHTML || kcmTagsEl.textContent || '';
+
+            // Clean up placeholder text
+            if (kcmTags.trim() === 'Paste KCM categories/tags here...') {
+                kcmTags = '';
+            }
+
+            if (!originalHTML || originalHTML.trim() === 'Paste your KCM blog HTML here...') {
+                showStatus('error', 'Please paste some HTML content first!');
+                return;
+            }
+
+            // Show loading state
+            showStatus('loading', '<div class="spinner"></div>Processing with Claude AI... This may take 30-60 seconds...');
+            convertBtn.disabled = true;
+
+            try {
+                // Call Python backend
+                const response = await fetch('http://localhost:5000/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        html: originalHTML,
+                        kcm_tags: kcmTags
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Store conversion results
+                currentConversion.html = data.converted_html;
+                currentConversion.seo = data.seo || {};
+                currentConversion.images = data.images || [];
+                currentConversion.featured_image_id = null; // Reset on new conversion
+
+                // Display results
+                document.getElementById('convertedHTML').value = data.converted_html;
+                document.getElementById('preview').innerHTML = data.converted_html;
+
+                // Display SEO metadata
+                if (data.seo) {
+                    document.getElementById('articleTitle').textContent = data.seo.article_title || 'N/A';
+                    document.getElementById('seoCategories').textContent = (data.seo.categories || []).join(', ') || 'N/A';
+                    document.getElementById('seoTags').textContent = (data.seo.tags || []).join(', ') || 'N/A';
+                    document.getElementById('seoKeyphrase').textContent = data.seo.focus_keyphrase || 'N/A';
+                    document.getElementById('seoTitle').textContent = data.seo.seo_title || 'N/A';
+
+                    // Only show meta description if it's not the default
+                    const defaultDesc = '%%title%% %%sep%% %%sitename%% %%sep%% %%primary_category%%';
+                    if (data.seo.meta_description && data.seo.meta_description !== defaultDesc) {
+                        document.getElementById('seoDescription').textContent = data.seo.meta_description;
+                        document.getElementById('metaDescriptionContainer').style.display = 'block';
+                    }
+                }
+
+                // Enable WordPress buttons
+                document.getElementById('sendToWPBtn').disabled = false;
+                document.getElementById('processImagesBtn').disabled = false;
+
+                // Display images
+                if (data.images && data.images.length > 0) {
+                    displayImages(data.images);
+                    document.getElementById('imagesSection').style.display = 'block';
+
+                    // Store images for CSV download
+                    window.currentImages = data.images;
+                }
+
+                document.getElementById('outputContainer').classList.add('visible');
+
+                showStatus('success', `✓ Conversion complete! Original: ${data.original_length} chars → Converted: ${data.converted_length} chars (${data.expansion}x expansion)`);
+
+            } catch (error) {
+                showStatus('error', `❌ Error: ${error.message}. Make sure the Python server is running (python kcm_converter_server.py)`);
+            } finally {
+                convertBtn.disabled = false;
+            }
+        }
+
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = type;
+            status.innerHTML = message;
+        }
+
+        function downloadHTML() {
+            const html = document.getElementById('convertedHTML').value;
+            if (!html) {
+                showStatus('error', '❌ No converted HTML available');
+                return;
+            }
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `converted_blog_${new Date().getTime()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showStatus('success', '✓ HTML file downloaded!');
+        }
+
+        function copyToClipboard() {
+            const html = document.getElementById('convertedHTML').value;
+            if (!html) {
+                showStatus('error', '❌ No converted HTML available');
+                return;
+            }
+            navigator.clipboard.writeText(html).then(() => {
+                showStatus('success', '✓ HTML copied to clipboard!');
+            }).catch(err => {
+                showStatus('error', '❌ Failed to copy to clipboard');
+            });
+        }
+
+        function displayImages(images) {
+            const imageList = document.getElementById('imageList');
+
+            let html = '<div style="background:#fff3cd; padding:15px; border-radius:4px; margin-bottom:15px; border:1px solid #ffc107;">';
+            html += '<strong>📸 Images Found:</strong> Click "Upload Images to WordPress" below to process automatically, or download the CSV for manual processing.';
+            html += '</div>';
+
+            html += '<table style="width:100%; border-collapse:collapse; font-size:13px;">';
+            html += '<thead><tr style="background:#e9ecef; border-bottom:2px solid #dee2e6;">';
+            html += '<th style="padding:10px; text-align:left;">#</th>';
+            html += '<th style="padding:10px; text-align:left;">Original URL</th>';
+            html += '<th style="padding:10px; text-align:left;">Suggested Filename</th>';
+            html += '<th style="padding:10px; text-align:left;">WordPress Path</th>';
+            html += '<th style="padding:10px; text-align:left;">Alt Text</th>';
+            html += '</tr></thead><tbody>';
+
+            images.forEach((img, index) => {
+                const rowStyle = index % 2 === 0 ? 'background:#f8f9fa;' : 'background:white;';
+                html += `<tr style="${rowStyle} border-bottom:1px solid #dee2e6;">`;
+                html += `<td style="padding:10px;">${index + 1}</td>`;
+                html += `<td style="padding:10px;"><a href="${img.original_url}" target="_blank" style="color:#2196F3; text-decoration:none;">🔗 View</a></td>`;
+                html += `<td style="padding:10px; font-family:monospace; font-size:12px;">${img.suggested_filename}</td>`;
+                html += `<td style="padding:10px; font-family:monospace; font-size:11px; color:#666;">${img.wordpress_path}</td>`;
+                html += `<td style="padding:10px; font-size:12px;">${img.alt_text || 'N/A'}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            imageList.innerHTML = html;
+        }
+
+        function downloadImageCSV() {
+            if (!window.currentImages || window.currentImages.length === 0) {
+                showStatus('error', '❌ No images to download');
+                return;
+            }
+
+            let csv = 'Number,Original URL,Suggested Filename,WordPress Path,Alt Text\n';
+
+            window.currentImages.forEach((img, index) => {
+                csv += `${index + 1},"${img.original_url}","${img.suggested_filename}","${img.wordpress_path}","${img.alt_text || ''}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `blog-images-${new Date().getTime()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showStatus('success', '✓ Image list CSV downloaded!');
+        }
+
+        async function processImages() {
+            const statusEl = document.getElementById('imageProcessStatus');
+            const processBtn = document.getElementById('processImagesBtn');
+
+            if (!currentConversion.images || currentConversion.images.length === 0) {
+                showStatus('error', '❌ No images to process. Please run conversion first.');
+                return;
+            }
+
+            // Show loading state
+            statusEl.style.display = 'block';
+            statusEl.style.background = '#fff3cd';
+            statusEl.style.color = '#856404';
+            statusEl.style.border = '1px solid #ffeaa7';
+            statusEl.innerHTML = `<div class="spinner"></div> Processing ${currentConversion.images.length} images... This may take a minute...`;
+            processBtn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:5000/process-images', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        images: currentConversion.images
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Success
+                    currentConversion.featured_image_id = result.featured_image_id;
+
+                    statusEl.style.background = '#d4edda';
+                    statusEl.style.color = '#155724';
+                    statusEl.style.border = '1px solid #c3e6cb';
+                    statusEl.innerHTML = `
+                        <strong>✅ Success!</strong><br>
+                        ${result.processed} images uploaded to WordPress<br>
+                        ${result.failed > 0 ? `<span style="color:#856404;">${result.failed} images failed</span><br>` : ''}
+                        <small>Featured image set to first image (ID: ${result.featured_image_id})</small>
+                    `;
+
+                    // Update image list to show WordPress URLs
+                    if (result.images && result.images.length > 0) {
+                        displayUploadedImages(result.images);
+                    }
+                } else {
+                    // Error
+                    statusEl.style.background = '#f8d7da';
+                    statusEl.style.color = '#721c24';
+                    statusEl.style.border = '1px solid #f5c6cb';
+                    statusEl.innerHTML = `
+                        <strong>❌ Error</strong><br>
+                        ${result.error || 'Unknown error occurred'}<br>
+                        ${result.failures ? `<small>${result.failures.length} images failed</small>` : ''}
+                    `;
+                    processBtn.disabled = false;
+                }
+            } catch (error) {
+                statusEl.style.background = '#f8d7da';
+                statusEl.style.color = '#721c24';
+                statusEl.style.border = '1px solid #f5c6cb';
+                statusEl.innerHTML = `
+                    <strong>❌ Connection Error</strong><br>
+                    ${error.message}<br>
+                    <small>Make sure the Python server is running and WordPress credentials are configured in .env</small>
+                `;
+                processBtn.disabled = false;
+            }
+        }
+
+        function displayUploadedImages(uploadedImages) {
+            const imageList = document.getElementById('imageList');
+
+            let html = '<h4 style="color:#28a745; margin-bottom:10px;">✅ Images Uploaded Successfully</h4>';
+            html += '<table style="width:100%; border-collapse:collapse; font-size:13px;">';
+            html += '<thead><tr style="background:#e9ecef; border-bottom:2px solid #dee2e6;">';
+            html += '<th style="padding:10px; text-align:left;">#</th>';
+            html += '<th style="padding:10px; text-align:left;">Filename</th>';
+            html += '<th style="padding:10px; text-align:left;">WordPress URL</th>';
+            html += '<th style="padding:10px; text-align:left;">Media ID</th>';
+            html += '<th style="padding:10px; text-align:left;">Alt Text</th>';
+            html += '</tr></thead><tbody>';
+
+            uploadedImages.forEach((img, index) => {
+                const rowStyle = index % 2 === 0 ? 'background:#f8f9fa;' : 'background:white;';
+                const isFeatured = index === 0;
+                html += `<tr style="${rowStyle} border-bottom:1px solid #dee2e6;">`;
+                html += `<td style="padding:10px;">${index + 1}${isFeatured ? ' 🌟' : ''}</td>`;
+                html += `<td style="padding:10px; font-family:monospace; font-size:12px;">${img.filename}</td>`;
+                html += `<td style="padding:10px;"><a href="${img.wordpress_url}" target="_blank" style="color:#2196F3; text-decoration:none;">View</a></td>`;
+                html += `<td style="padding:10px;">${img.wordpress_id}</td>`;
+                html += `<td style="padding:10px; font-size:12px;">${img.alt_text || 'N/A'}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            html += '<p style="margin-top:10px; font-size:12px; color:#666;">🌟 = Featured Image</p>';
+            imageList.innerHTML = html;
+        }
+
+        async function sendToWordPress() {
+            const wpStatusEl = document.getElementById('wpStatus');
+            const sendBtn = document.getElementById('sendToWPBtn');
+            const retryBtn = document.getElementById('retryWebhookBtn');
+
+            if (!currentConversion.html || !currentConversion.seo) {
+                showStatus('error', '❌ No conversion data available. Please convert a blog first.');
+                return;
+            }
+
+            // Show loading state
+            wpStatusEl.style.display = 'block';
+            wpStatusEl.style.background = '#fff3cd';
+            wpStatusEl.style.color = '#856404';
+            wpStatusEl.style.border = '1px solid #ffeaa7';
+            wpStatusEl.innerHTML = '<div class="spinner"></div> Sending to WordPress via n8n webhook...';
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:5000/send-to-wordpress', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        converted_html: currentConversion.html,
+                        seo_metadata: currentConversion.seo,
+                        featured_image_id: currentConversion.featured_image_id
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Success
+                    wpStatusEl.style.background = '#d4edda';
+                    wpStatusEl.style.color = '#155724';
+                    wpStatusEl.style.border = '1px solid #c3e6cb';
+                    wpStatusEl.innerHTML = `
+                        <strong>✅ Success!</strong><br>
+                        ${result.message}<br>
+                        <small>Check your WordPress admin for the draft post: <a href="https://mikesellsnj.com/wp-admin/edit.php?post_status=draft&post_type=post" target="_blank" style="color:#155724;">View Drafts</a></small>
+                    `;
+                    // Show retry button after successful send
+                    retryBtn.style.display = 'inline-block';
+                } else {
+                    // Error
+                    wpStatusEl.style.background = '#f8d7da';
+                    wpStatusEl.style.color = '#721c24';
+                    wpStatusEl.style.border = '1px solid #f5c6cb';
+                    wpStatusEl.innerHTML = `
+                        <strong>❌ Error</strong><br>
+                        ${result.error || 'Unknown error occurred'}<br>
+                        ${result.details ? `<small>${result.details}</small>` : ''}
+                    `;
+                    sendBtn.disabled = false;
+                    // Show retry button even on error so user can retry
+                    retryBtn.style.display = 'inline-block';
+                }
+            } catch (error) {
+                wpStatusEl.style.background = '#f8d7da';
+                wpStatusEl.style.color = '#721c24';
+                wpStatusEl.style.border = '1px solid #f5c6cb';
+                wpStatusEl.innerHTML = `
+                    <strong>❌ Connection Error</strong><br>
+                    ${error.message}<br>
+                    <small>Make sure the Python server is running (python kcm_converter_server.py)</small>
+                `;
+                sendBtn.disabled = false;
+                // Show retry button on connection error
+                retryBtn.style.display = 'inline-block';
+            }
+        }
+
+        async function retryWebhook() {
+            const wpStatusEl = document.getElementById('wpStatus');
+            const retryBtn = document.getElementById('retryWebhookBtn');
+
+            // Show loading state
+            wpStatusEl.style.display = 'block';
+            wpStatusEl.style.background = '#fff3cd';
+            wpStatusEl.style.color = '#856404';
+            wpStatusEl.style.border = '1px solid #ffeaa7';
+            wpStatusEl.innerHTML = '<div class="spinner"></div> Retrying webhook to WordPress...';
+            retryBtn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:5000/retry-webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Success
+                    wpStatusEl.style.background = '#d4edda';
+                    wpStatusEl.style.color = '#155724';
+                    wpStatusEl.style.border = '1px solid #c3e6cb';
+                    wpStatusEl.innerHTML = `
+                        <strong>✅ Success!</strong><br>
+                        ${result.message}<br>
+                        <small>Check your WordPress admin for the draft post: <a href="https://mikesellsnj.com/wp-admin/edit.php?post_status=draft&post_type=post" target="_blank" style="color:#155724;">View Drafts</a></small>
+                    `;
+                    retryBtn.disabled = false;
+                } else {
+                    // Error
+                    wpStatusEl.style.background = '#f8d7da';
+                    wpStatusEl.style.color = '#721c24';
+                    wpStatusEl.style.border = '1px solid #f5c6cb';
+                    wpStatusEl.innerHTML = `
+                        <strong>❌ Error</strong><br>
+                        ${result.error || 'Unknown error occurred'}<br>
+                        ${result.details ? `<small>${result.details}</small>` : ''}
+                    `;
+                    retryBtn.disabled = false;
+                }
+            } catch (error) {
+                wpStatusEl.style.background = '#f8d7da';
+                wpStatusEl.style.color = '#721c24';
+                wpStatusEl.style.border = '1px solid #f5c6cb';
+                wpStatusEl.innerHTML = `
+                    <strong>❌ Connection Error</strong><br>
+                    ${error.message}<br>
+                    <small>Make sure the Python server is running (python kcm_converter_server.py)</small>
+                `;
+                retryBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
