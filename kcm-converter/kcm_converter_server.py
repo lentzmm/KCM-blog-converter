@@ -595,14 +595,26 @@ def extract_images(original_html: str, converted_html: str, focus_keyphrase: str
         filename = os.path.basename(parsed.path)
         ext = os.path.splitext(filename)[1] if '.' in filename else '.png'
 
-        # Generate SEO/GEO optimized filename
-        # Format: {topic}-{geo}-{descriptor}.ext
-        # Example: home-equity-south-jersey-guide.png
-        # Use topic + geo + descriptor
-        if index == 1:
-            suggested_filename = f"{topic_term}-{geo_term}-guide{ext}"
+        # Generate SEO/GEO optimized filename using focus keyphrase
+        # Format: {focus-keyphrase}-{descriptor}.ext
+        # Example: south-jersey-home-equity-guide.png
+        if focus_keyphrase:
+            # Use focus keyphrase as base for filename (convert to slug format)
+            keyphrase_slug = focus_keyphrase.lower().replace(' ', '-')
+            # Remove common stop words to keep filename concise
+            keyphrase_slug = re.sub(r'\b(the|a|an|and|or|but|in|on|at|to|for)\b', '', keyphrase_slug)
+            keyphrase_slug = re.sub(r'-+', '-', keyphrase_slug).strip('-')
+
+            if index == 1:
+                suggested_filename = f"{keyphrase_slug}-guide{ext}"
+            else:
+                suggested_filename = f"{keyphrase_slug}-{index}{ext}"
         else:
-            suggested_filename = f"{topic_term}-{geo_term}-{index}{ext}"
+            # Fallback to topic + geo if no keyphrase
+            if index == 1:
+                suggested_filename = f"{topic_term}-{geo_term}-guide{ext}"
+            else:
+                suggested_filename = f"{topic_term}-{geo_term}-{index}{ext}"
 
         wordpress_path = f"/wp-content/uploads/{year}/{month}/{suggested_filename}"
 
@@ -985,8 +997,13 @@ def convert():
         # Generate SEO metadata (AI-generated)
         ai_seo_metadata = generate_seo_metadata(original_html, converted_html)
 
-        # Merge KCM recommendations with AI suggestions
-        seo_metadata = merge_taxonomy(kcm_taxonomy, ai_seo_metadata)
+        # Merge KCM recommendations with AI suggestions (correctly pass lists)
+        seo_metadata = merge_taxonomy(
+            kcm_taxonomy.get('categories', []),
+            kcm_taxonomy.get('tags', []),
+            ai_seo_metadata.get('categories', []),
+            ai_seo_metadata.get('tags', [])
+        )
 
         # Preserve other AI-generated fields
         seo_metadata['article_title'] = ai_seo_metadata.get('article_title', '')
@@ -1048,8 +1065,28 @@ def send_to_wordpress():
             logger.info(f"Updating {len(image_url_mapping)} image URLs in HTML with WordPress URLs")
             converted_html = convert_image_urls(converted_html, image_url_mapping)
 
-        # Build n8n webhook payload
-        payload = build_webhook_payload(seo_metadata, converted_html, featured_image_id)
+        # Build n8n webhook payload (correctly pass all arguments)
+        title = seo_metadata.get('article_title', 'South Jersey Real Estate Article')
+        excerpt = seo_metadata.get('meta_description', '')[:150]  # WordPress excerpt from meta description
+        categories = seo_metadata.get('categories', [])
+        tags = seo_metadata.get('tags', [])
+
+        # Build Yoast meta
+        yoast_meta = {
+            'yoast_wpseo_title': seo_metadata.get('seo_title', ''),
+            'yoast_wpseo_metadesc': seo_metadata.get('meta_description', ''),
+            'yoast_wpseo_focuskw': seo_metadata.get('focus_keyphrase', '')
+        }
+
+        payload = build_webhook_payload(
+            title=title,
+            content=converted_html,
+            excerpt=excerpt,
+            categories=categories,
+            tags=tags,
+            featured_media_id=featured_image_id,
+            yoast_meta=yoast_meta
+        )
 
         # Store payload for potential retry
         last_webhook_payload = payload
