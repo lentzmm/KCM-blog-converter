@@ -130,7 +130,7 @@ logger.info(f"Final slug: {final_slug}")
 
 ## Files Modified
 
-1. **refined_kcm_prompt_ACTIVE.md** (lines 280-294)
+1. **kcm_prompt_ACTIVE.md** (lines 280-294)
    - Changed output requirements to ONLY return HTML
    - Explicitly told Claude NOT to include SEO sections
 

@@ -782,7 +782,7 @@ def rewrite_blog_post(original_html: str, context_pages: List[Dict]) -> str:
     logger.info("Sending to Claude for rewriting...")
 
     # Load refined prompt template (ACTIVE version)
-    prompt_path = Path(__file__).parent / 'refined_kcm_prompt_ACTIVE.md'
+    prompt_path = Path(__file__).parent / 'kcm_prompt_ACTIVE.md'
 
     try:
         with open(prompt_path, 'r', encoding='utf-8') as f:

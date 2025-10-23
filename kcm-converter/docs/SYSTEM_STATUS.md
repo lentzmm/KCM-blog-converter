@@ -3,7 +3,7 @@
 ## Current Configuration
 
 ### Active Prompt Template
-**File:** `refined_kcm_prompt_ACTIVE.md`
+**File:** `kcm_prompt_ACTIVE.md`
 - Dynamically loaded at runtime by `rewrite_blog_post()` function
 - Previous versions (v3, v4) preserved for reference
 - Clear naming convention ensures no confusion about which prompt is in use
@@ -111,7 +111,7 @@
   - Upload Images + Send HTML grouped together
   - Manual options (download, copy) less prominent
 
-### refined_kcm_prompt_v4.md → refined_kcm_prompt_ACTIVE.md
+### refined_kcm_prompt_v4.md → kcm_prompt_ACTIVE.md
 - Renamed for clarity
 - Contains active conversion guidelines
 - Includes 50% alt text keyphrase rule
