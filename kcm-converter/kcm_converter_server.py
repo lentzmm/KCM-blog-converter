@@ -900,11 +900,13 @@ OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, no code fen
 CRITICAL: Do NOT include:
 - Your planning or thinking process
 - Section headers like "## REWRITTEN HTML"
-- SEO elements (those are generated separately)
-- Image alt text suggestions (those are generated separately)
+- SEO elements (KEYPHRASE, SEO TITLE, META DESCRIPTION - these are generated separately)
+- Image alt text suggestions (IMAGE ALT TEXT - these are generated separately)
+- Any text after the final closing HTML tag
 - Any markdown formatting
 
-Start your response with the opening HTML tag (like <h1> or <p>) and end with the closing tag."""
+Start your response with the opening HTML tag (like <h1> or <p>) and end with the final closing tag.
+NOTHING should appear after the last closing HTML tag - no KEYPHRASE, no SEO TITLE, no META DESCRIPTION, no IMAGE ALT TEXT."""
 
     try:
         message = claude_client.messages.create(
@@ -950,18 +952,22 @@ Start your response with the opening HTML tag (like <h1> or <p>) and end with th
 
         # Remove any markdown sections at the END
         # Look for patterns like "## OUTPUT", "### 1.", "### 2.", "## SEO", etc.
-        # These typically appear after the HTML content ends
+        # Also look for plain text SEO metadata that Claude might add
         end_section_patterns = [
             r'\n#+\s*(OUTPUT|SEO|IMAGE|KEYPHRASE|DELIVERABLE).*',
             r'\n###\s*\d+\..*',  # Numbered sections like "### 1. Rewritten HTML"
-            r'\n##\s*\d+\..*'   # Numbered sections like "## 1. HTML"
+            r'\n##\s*\d+\..*',   # Numbered sections like "## 1. HTML"
+            r'\n\s*KEYPHRASE:.*',  # Plain text SEO metadata
+            r'\n\s*SEO TITLE:.*',
+            r'\n\s*META DESCRIPTION:.*',
+            r'\n\s*IMAGE ALT TEXT:.*'
         ]
 
         for pattern in end_section_patterns:
             match = re.search(pattern, rewritten_html, re.IGNORECASE | re.DOTALL)
             if match:
                 rewritten_html = rewritten_html[:match.start()]
-                logger.info(f"Removed markdown section from converted HTML (pattern: {pattern[:30]}...)")
+                logger.info(f"Removed trailing SEO metadata from HTML (pattern matched at position {match.start()})")
                 break  # Only need to find the first match since we're removing everything after it
 
         # Remove any remaining em dashes
