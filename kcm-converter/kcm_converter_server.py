@@ -893,7 +893,16 @@ Apply ALL guidelines from the guides above to convert this national content into
 - Maintain 75-85 Flesch Reading Ease score
 - Use active voice 95%+ of the time
 
-OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, no code fences, just the complete localized blog post in HTML format ready for WordPress."""
+OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, no code fences, just the complete localized blog post in HTML format ready for WordPress.
+
+CRITICAL: Do NOT include:
+- Your planning or thinking process
+- Section headers like "## REWRITTEN HTML"
+- SEO elements (those are generated separately)
+- Image alt text suggestions (those are generated separately)
+- Any markdown formatting
+
+Start your response with the opening HTML tag (like <h1> or <p>) and end with the closing tag."""
 
     try:
         message = claude_client.messages.create(
@@ -904,6 +913,8 @@ OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, no code fen
 
         rewritten_html = message.content[0].text.strip()
 
+        # AGGRESSIVE CLEANING: Remove any non-HTML content Claude added
+
         # Remove markdown code fences if present
         if rewritten_html.startswith('```html'):
             lines = rewritten_html.split('\n')
@@ -912,7 +923,17 @@ OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, no code fen
             lines = rewritten_html.split('\n')
             rewritten_html = '\n'.join(lines[1:-1])
 
-        # Aggressively clean up any markdown sections Claude might have added
+        # Remove any thinking/planning text before the HTML
+        # Look for the first HTML tag and start from there
+        html_start_patterns = [r'<h1[^>]*>', r'<h2[^>]*>', r'<h3[^>]*>', r'<p[^>]*>', r'<div[^>]*>', r'<article[^>]*>']
+        for pattern in html_start_patterns:
+            match = re.search(pattern, rewritten_html, re.IGNORECASE)
+            if match:
+                # Start from this HTML tag
+                rewritten_html = rewritten_html[match.start():]
+                logger.info(f"Stripped preamble text, HTML starts with: {pattern}")
+                break
+
         # Remove any markdown headers at the beginning (# or ##)
         while rewritten_html.strip().startswith('#'):
             lines = rewritten_html.strip().split('\n')
@@ -996,20 +1017,28 @@ def convert():
 
         # Generate SEO metadata (AI-generated)
         ai_seo_metadata = generate_seo_metadata(original_html, converted_html)
+        logger.info(f"AI SEO metadata generated: {ai_seo_metadata}")
 
         # Merge KCM recommendations with AI suggestions (correctly pass lists)
+        logger.info(f"KCM taxonomy before merge: {kcm_taxonomy}")
+        logger.info(f"AI categories: {ai_seo_metadata.get('categories', [])}")
+        logger.info(f"AI tags: {ai_seo_metadata.get('tags', [])}")
+
         seo_metadata = merge_taxonomy(
             kcm_taxonomy.get('categories', []),
             kcm_taxonomy.get('tags', []),
             ai_seo_metadata.get('categories', []),
             ai_seo_metadata.get('tags', [])
         )
+        logger.info(f"Merged SEO metadata: {seo_metadata}")
 
         # Preserve other AI-generated fields
         seo_metadata['article_title'] = ai_seo_metadata.get('article_title', '')
         seo_metadata['focus_keyphrase'] = ai_seo_metadata.get('focus_keyphrase', '')
         seo_metadata['seo_title'] = ai_seo_metadata.get('seo_title', '')
         seo_metadata['meta_description'] = ai_seo_metadata.get('meta_description', '')
+
+        logger.info(f"Final SEO metadata with all fields: {seo_metadata}")
 
         # Extract images with focus keyphrase for SEO-optimized alt text
         focus_keyphrase = seo_metadata.get('focus_keyphrase', '')
@@ -1071,6 +1100,12 @@ def send_to_wordpress():
         categories = seo_metadata.get('categories', [])
         tags = seo_metadata.get('tags', [])
 
+        logger.info(f"Building webhook payload with:")
+        logger.info(f"  Title: {title}")
+        logger.info(f"  Categories (names): {categories}")
+        logger.info(f"  Tags (names): {tags}")
+        logger.info(f"  Focus keyphrase: {seo_metadata.get('focus_keyphrase', '')}")
+
         # Build Yoast meta
         yoast_meta = {
             'yoast_wpseo_title': seo_metadata.get('seo_title', ''),
@@ -1087,6 +1122,8 @@ def send_to_wordpress():
             featured_media_id=featured_image_id,
             yoast_meta=yoast_meta
         )
+
+        logger.info(f"Webhook payload built with category IDs: {payload.get('categories', [])} and tag IDs: {payload.get('tags', [])}")
 
         # Store payload for potential retry
         last_webhook_payload = payload
