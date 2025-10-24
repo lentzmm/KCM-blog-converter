@@ -721,15 +721,17 @@ Generate the following SEO metadata in JSON format:
    If the default works, return the string "%%title%% %%sep%% %%sitename%% %%sep%% %%primary_category%%"
    Otherwise, provide a compelling 140-160 character custom meta description
 
-Return ONLY valid JSON with these exact keys:
+Return ONLY valid JSON. Here's an example of the EXACT format required:
 {{
-  "article_title": "...",
-  "categories": [...],
-  "tags": [...],
-  "focus_keyphrase": "...",
-  "seo_title": "...",
-  "meta_description": "..."
-}}"""
+  "article_title": "Understanding Home Equity in South Jersey",
+  "categories": ["For Buyers", "Housing Market Updates"],
+  "tags": ["Home Prices", "Equity", "Interest Rates"],
+  "focus_keyphrase": "south jersey home equity",
+  "seo_title": "South Jersey Home Equity Guide | Mike Sells NJ",
+  "meta_description": "Learn how home equity works in South Jersey and how to leverage it for your next move."
+}}
+
+CRITICAL: Do NOT use placeholder text like "..." or field names as values. Return actual content for THIS specific article."""
 
     try:
         message = claude_client.messages.create(
