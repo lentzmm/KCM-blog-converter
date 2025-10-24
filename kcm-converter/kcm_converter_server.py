@@ -1133,11 +1133,18 @@ def send_to_wordpress():
         logger.info(f"Sending to n8n webhook: {len(converted_html)} chars, {len(seo_metadata.get('categories', []))} categories, {len(seo_metadata.get('tags', []))} tags")
 
         # Send to n8n webhook (production)
+        # n8n expects data at body.body path, so wrap the payload
         webhook_url = "https://n8n.srv1007195.hstgr.cloud/webhook/wordpress-publish"
+
+        wrapped_payload = {
+            'body': payload
+        }
+
+        logger.info(f"Webhook payload structure: body.categories={len(payload.get('categories', []))}, body.tags={len(payload.get('tags', []))}")
 
         response = requests.post(
             webhook_url,
-            json=payload,
+            json=wrapped_payload,
             headers={'Content-Type': 'application/json'},
             timeout=30
         )
