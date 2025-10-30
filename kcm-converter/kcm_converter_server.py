@@ -1000,8 +1000,30 @@ def send_to_wordpress():
             logger.info(f"Updating {len(image_url_mapping)} image URLs in HTML with WordPress URLs")
             converted_html = convert_image_urls(converted_html, image_url_mapping)
 
-        # Build n8n webhook payload
-        payload = build_webhook_payload(seo_metadata, converted_html, featured_image_id)
+        # Extract fields from seo_metadata for webhook payload
+        title = seo_metadata.get('article_title', 'Untitled')
+        categories = seo_metadata.get('categories', [])
+        tags = seo_metadata.get('tags', [])
+
+        # Build Yoast SEO meta (including focus keyphrase)
+        yoast_meta = {
+            'yoast_wpseo_focuskw': seo_metadata.get('focus_keyphrase', ''),
+            'yoast_wpseo_title': seo_metadata.get('seo_title', ''),
+            'yoast_wpseo_metadesc': seo_metadata.get('meta_description', '')
+        }
+
+        logger.info(f"Yoast SEO metadata: Focus Keyphrase = '{yoast_meta['yoast_wpseo_focuskw']}'")
+
+        # Build n8n webhook payload with properly structured parameters
+        payload = build_webhook_payload(
+            title=title,
+            content=converted_html,
+            excerpt='',  # Empty excerpt for now
+            categories=categories,
+            tags=tags,
+            featured_media_id=featured_image_id,
+            yoast_meta=yoast_meta
+        )
 
         # Store payload for potential retry
         last_webhook_payload = payload
