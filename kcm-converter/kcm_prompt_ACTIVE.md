@@ -1,6 +1,18 @@
-# KCM to South Jersey Blog Conversion Prompt - VERSION 21
+# KCM to South Jersey Blog Conversion Prompt - VERSION 22
 
 ## VERSION HISTORY
+
+### v22 (2025-10-30)
+**Added:**
+- Town randomization requirements to prevent repetition
+- Reference to Yoast SEO Guidelines document
+- Explicit instructions to vary towns between articles
+
+**Changed:**
+- Town selection now requires randomization (no default Cherry Hill/Washington Twp)
+- Enhanced quality control for town variety
+
+**Status:** Current
 
 ### v21 (2025-10-23)
 **Added:**
@@ -11,7 +23,7 @@
 **Changed:**
 - Deliverables section now includes 5 components (was 3)
 
-**Status:** Current
+**Status:** Superseded by v22
 
 ### v20 (2025-10-23)
 **Created:**
@@ -33,11 +45,14 @@ Convert national real estate content into South Jersey gold. Make it sound human
 ```
 {original_html}        - The KCM article HTML to convert
 {writing_guide}        - Writing Mechanics Guide (anti-AI patterns, human voice)
-{seo_guide}           - SEO Optimization Guide (Yoast compliance)
+{seo_guide}           - SEO Optimization Guide (Yoast compliance) - see also yoast_seo_guidelines.md
 {town_guide}          - Town Naming Guide (proper local names)
 {technical_guide}     - Technical Requirements Guide (HTML, data rules)
 {context_docs}        - Market data, statistics, local insights
 ```
+
+**Additional Reference:**
+- `yoast_seo_guidelines.md` - Comprehensive Yoast SEO best practices including town randomization rules
 
 ---
 
@@ -87,11 +102,16 @@ Based on the original article and guides:
    - Specific to THIS article
    - Natural search phrase
 
-3. **Choose Towns** (from Town Naming Guide)
-   - Match to article audience and topic
-   - Use proper local names
-   - Rotate from previous articles (avoid repetition)
-   - Include 1-2 focus areas, 1-2 supporting examples
+3. **Choose Towns** (from Town Naming Guide + Randomization Rules)
+   - **CRITICAL**: DO NOT default to Cherry Hill and Washington Twp
+   - **RANDOMIZE**: Select different towns for each article
+   - Match towns to article audience and topic:
+     * High-price topics → Haddonfield, Moorestown, Cherry Hill
+     * Starter homes → Mount Laurel, Deptford, Clayton
+     * Rural/affordable → Mullica Hill, Pitman, Sewell
+   - Use proper local names (never formal municipality names)
+   - Maximum 4-5 town mentions total
+   - Vary towns from article to article to avoid word stuffing
 
 4. **Identify Key Data** (from Context Docs)
    - What statistics support this article?
@@ -119,11 +139,14 @@ Apply ALL guides simultaneously:
 - Image file naming conventions
 - Image alt text strategy
 
-**From Town Naming Guide:**
+**From Town Naming Guide + Randomization:**
 - Use EXACT proper names verified in guide
 - 3-5 "South Jersey" mentions TOTAL
 - 4-5 specific town mentions maximum
+- **RANDOMIZE town selection** - do NOT use same towns every time
 - Natural, conversational geographic references
+- Match towns to article topic (luxury vs starter vs rural)
+- ONLY tag towns that are mentioned 2+ times in content
 
 **From Technical Requirements Guide:**
 - Preserve ALL existing HTML structure
@@ -159,7 +182,10 @@ Before delivering, verify against each guide:
 - [ ] Proper local names used (no formal municipality names)
 - [ ] 3-5 "South Jersey" mentions TOTAL
 - [ ] 4-5 town mentions maximum
+- [ ] Towns are RANDOMIZED (not the same as previous articles)
+- [ ] Towns match article topic (luxury/starter/rural)
 - [ ] No "avoid" towns featured
+- [ ] ONLY towns mentioned 2+ times are tagged
 
 **Technical Requirements Checklist:**
 - [ ] All original links preserved exactly
