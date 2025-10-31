@@ -222,7 +222,164 @@ Cherry Hill homeowner reviewing home equity line of credit options
 
 ---
 
-## 8. Subheading Distribution Requirements
+## 8. Sentence Length Requirements (CRITICAL)
+
+### Yoast Requirement: Maximum 25% of Sentences Over 20 Words
+
+**Rule:** No more than 25% of sentences should exceed 20 words.
+
+### Current Issue
+If Yoast reports **"31.7% of the sentences contain more than 20 words"**, this means the content violates the readability standard and must be corrected.
+
+### Why This Matters
+- **Readability**: Long sentences are harder to understand and reduce engagement
+- **SEO**: Google favors content that's easy to read and scan
+- **User Experience**: Shorter sentences keep readers engaged
+- **Yoast Scoring**: Violations trigger orange/red warnings affecting overall SEO score
+
+### The Target Formula
+
+**Ideal Distribution:**
+- **75% of sentences**: 10-15 words
+- **20% of sentences**: 16-20 words
+- **5% of sentences**: 21-25 words (absolute maximum)
+- **0% of sentences**: 26+ words (FORBIDDEN - rewrite immediately)
+
+### Step-by-Step Fix
+
+**Step 1: Identify Long Sentences**
+- Count words in each sentence
+- Flag any sentence with 21+ words
+- Target: Reduce to 20 words or less
+
+**Step 2: Break Into Multiple Sentences**
+Most long sentences can be split at natural breaks:
+- Conjunctions (and, but, or, so)
+- Dependent clauses (which, that, because, since)
+- List items
+
+**Step 3: Eliminate Filler Words**
+Remove unnecessary words that add length without value:
+- "in order to" → "to"
+- "due to the fact that" → "because"
+- "at this point in time" → "now"
+- "it is important to note that" → [delete entirely]
+
+### Examples
+
+**❌ VIOLATION (32 words):**
+```
+While many factors contribute to the overall health of the real estate market in South Jersey, supply and demand dynamics remain the primary driver of price trends across all counties in the region.
+```
+
+**✅ COMPLIANT (3 sentences, average 11 words each):**
+```
+What drives home prices in South Jersey? Supply and demand. When inventory stays low and buyers keep competing, prices go up.
+```
+
+**❌ VIOLATION (28 words):**
+```
+According to recent data from the National Association of Realtors, homes that are professionally staged tend to sell faster and for higher prices than comparable unstaged properties.
+```
+
+**✅ COMPLIANT (2 sentences, 14 and 10 words):**
+```
+NAR data shows professionally staged homes sell faster and for more money. The difference can be significant compared to unstaged properties.
+```
+
+**❌ VIOLATION (35 words):**
+```
+If you're considering selling your home in the near future, it's important to note that preparing your property in advance by addressing minor repairs and improving curb appeal can make a substantial difference in both the sale price and time on market.
+```
+
+**✅ COMPLIANT (4 sentences, average 12 words each):**
+```
+Thinking about selling soon? Start preparing now. Fix minor repairs and improve curb appeal. These simple steps can boost your sale price and reduce time on market.
+```
+
+### Techniques for Shortening Sentences
+
+**Technique 1: Split at Conjunctions**
+
+❌ "Rates are rising and inventory is falling, but buyer demand remains strong."
+✅ "Rates are rising. Inventory is falling. But buyer demand remains strong."
+
+**Technique 2: Remove Introductory Phrases**
+
+❌ "It's important to note that home prices in Cherry Hill increased 8% last year."
+✅ "Cherry Hill home prices increased 8% last year."
+
+**Technique 3: Convert Clauses to Sentences**
+
+❌ "Homes that are priced correctly from the start tend to sell faster, which saves sellers money on carrying costs."
+✅ "Price correctly from the start. You'll sell faster and save on carrying costs."
+
+**Technique 4: Use Active Voice**
+
+❌ "The house was purchased by a family from Philadelphia after multiple offers were received."
+✅ "A Philadelphia family bought the house. We received multiple offers."
+
+**Technique 5: Cut Redundancy**
+
+❌ "In the current market conditions we're seeing today, buyers need to act quickly and fast."
+✅ "Buyers need to act fast."
+
+### Common Long Sentence Patterns to Avoid
+
+**Pattern 1: Multiple Clauses with Commas**
+❌ "When inventory is low, and buyer demand is high, and rates remain stable, prices tend to climb."
+✅ "Low inventory plus high demand equals rising prices. Especially when rates stay stable."
+
+**Pattern 2: "Because/Since" Dependencies**
+❌ "Since mortgage rates have increased significantly over the past year, many buyers are reconsidering their budgets."
+✅ "Mortgage rates jumped over the past year. Many buyers are reconsidering their budgets."
+
+**Pattern 3: Lists Within Sentences**
+❌ "Staging involves decluttering, depersonalizing, making minor repairs, and ensuring every room shows well."
+✅ "Staging has four key steps. Declutter. Depersonalize. Fix minor issues. Make every room shine."
+
+**Pattern 4: According to [Source] Constructions**
+❌ "According to recent research from the National Association of Realtors published in their quarterly report..."
+✅ "NAR's latest report shows..." or just state the fact directly.
+
+### Word Count Reference
+
+To help visualize 20-word limit:
+
+**Exactly 20 words:**
+"Home prices in South Jersey continue to rise despite higher interest rates, driven primarily by low inventory levels and strong buyer demand across the region."
+
+**Shortened to 15 words:**
+"South Jersey home prices keep rising. Low inventory and strong demand outweigh higher interest rates."
+
+### Measuring Sentence Length
+
+**Manual Count:**
+- Copy content into a word processor
+- Use readability statistics feature
+- Check "words per sentence" average
+- Target: 12-15 words per sentence average
+
+**Yoast Plugin:**
+- Automatically flags sentences over 20 words
+- Shows percentage exceeding recommendation
+- Target: Green light (≤25% over 20 words)
+
+### Quality Control Checklist
+
+Before finalizing content:
+
+- [ ] Count words in each sentence
+- [ ] Flag all sentences with 21+ words
+- [ ] Rewrite flagged sentences (split or trim)
+- [ ] Verify no sentence exceeds 25 words (absolute max)
+- [ ] Check Yoast readability: ≤25% over 20 words
+- [ ] Maintain meaning and flow while shortening
+- [ ] Read aloud to ensure natural rhythm
+
+---
+
+## 9. Subheading Distribution Requirements
 
 ### The 300-Word Rule (CRITICAL)
 
@@ -305,29 +462,41 @@ Cherry Hill homeowner reviewing home equity line of credit options
 
 ---
 
-## 9. Content Optimization Checklist
+## 10. Content Optimization Checklist
 
 Before sending to WordPress, verify:
 
+**Readability:**
+- [ ] **Maximum 25% of sentences exceed 20 words (Yoast critical requirement)**
+- [ ] **75% of sentences are 10-15 words**
+- [ ] **No sentence exceeds 25 words (absolute maximum)**
+- [ ] Active voice used in 95%+ of sentences
+- [ ] Flesch reading ease score: 75-85
+
+**Content Structure:**
+- [ ] **No text section exceeds 300 words without subheading (H2/H3)**
+- [ ] **Subheadings are descriptive and include keyphrase variations in 2-3 instances**
+
+**SEO Elements:**
 - [ ] Focus keyphrase is 3-6 words with location
 - [ ] SEO title is 50-60 characters
 - [ ] Meta description is 140-160 characters (or using default template)
-- [ ] 1-3 categories selected (appropriate to content)
-- [ ] 5-10 tags selected (from existing tag list only)
-- [ ] Town tags match towns mentioned in content
-- [ ] **No text section exceeds 300 words without subheading (H2/H3)**
-- [ ] **Subheadings are descriptive and include keyphrase variations in 2-3 instances**
 - [ ] Focus keyphrase appears in:
   - [ ] SEO title
   - [ ] First paragraph
   - [ ] At least one H2/H3 heading
   - [ ] 50%+ of image alt text
+
+**WordPress Organization:**
+- [ ] 1-3 categories selected (appropriate to content)
+- [ ] 5-10 tags selected (from existing tag list only)
+- [ ] Town tags match towns mentioned in content
 - [ ] Towns are randomized (not always Cherry Hill + Washington Twp)
 - [ ] No more than 4-5 town mentions total
 
 ---
 
-## 10. Technical Implementation
+## 11. Technical Implementation
 
 ### WordPress REST API Fields
 
@@ -360,7 +529,7 @@ When sending to WordPress, include:
 
 ---
 
-## 11. Quality Assurance
+## 12. Quality Assurance
 
 ### Manual Review Points
 
@@ -371,20 +540,28 @@ After WordPress draft is created, verify:
    - ✅ Green light for SEO title length
    - ✅ Green light for meta description
    - ✅ Green light for keyphrase in content
+   - ✅ Green light for sentence length (≤25% over 20 words)
    - ✅ Green light for subheading distribution (no sections >300 words)
 
-2. **Content Structure**:
+2. **Readability Metrics**:
+   - Maximum 25% of sentences exceed 20 words
+   - Average sentence length: 12-15 words
+   - No sentence exceeds 25 words
+   - Flesch reading ease: 75-85
+   - 95%+ active voice
+
+3. **Content Structure**:
    - No text section exceeds 300 words without H2/H3 subheading
    - Subheadings are descriptive and scannable
    - Heading hierarchy is maintained (no level skipping)
    - Keyphrase variations appear in 2-3 subheadings
 
-3. **Content Quality**:
+4. **Content Quality**:
    - Towns mentioned feel natural and varied
    - Focus keyphrase doesn't feel forced
    - Images have descriptive, helpful alt text
 
-4. **No Word Stuffing**:
+5. **No Word Stuffing**:
    - Same towns don't appear in every article
    - Focus keyphrase density is natural (1-2% of content)
 
@@ -400,9 +577,24 @@ After WordPress draft is created, verify:
 
 ## Version History
 
+### v1.2 (2025-10-31)
+**Added:**
+- Comprehensive Section 8 on sentence length requirements (critical Yoast requirement)
+- Detailed examples of shortening long sentences
+- 5 techniques for reducing sentence length
+- Common long sentence patterns to avoid
+- Step-by-step fix process for sentence length violations
+
+**Changed:**
+- Content optimization checklist now prioritizes readability metrics
+- Quality assurance expanded to include sentence length verification
+- Reorganized checklist to emphasize readability first
+
+**Status:** Current
+
 ### v1.1 (2025-10-31)
 **Added:**
-- Dedicated section on subheading distribution requirements (Section 8)
+- Dedicated section on subheading distribution requirements (Section 9)
 - The 300-word rule with examples and implementation guidelines
 - Enhanced quality assurance checklist with subheading checks
 - Common mistakes to avoid with subheading structure
@@ -411,7 +603,7 @@ After WordPress draft is created, verify:
 - Content optimization checklist now includes explicit subheading requirements
 - Quality assurance section expanded to verify subheading distribution
 
-**Status:** Current
+**Status:** Superseded by v1.2
 
 ### v1.0 (2025-10-30)
 **Created:**
@@ -426,4 +618,4 @@ After WordPress draft is created, verify:
 ---
 
 **Last Updated**: 2025-10-31
-**Version**: 1.1
+**Version**: 1.2
