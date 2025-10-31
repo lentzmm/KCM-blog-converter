@@ -1,6 +1,19 @@
-# KCM to South Jersey Blog Conversion Prompt - VERSION 22
+# KCM to South Jersey Blog Conversion Prompt - VERSION 23
 
 ## VERSION HISTORY
+
+### v23 (2025-10-31)
+**Added:**
+- Explicit subheading distribution requirement (300-word maximum per section)
+- Enhanced SEO checklist with subheading structure verification
+- Reference to updated Yoast SEO Guidelines v1.1
+
+**Changed:**
+- Writing phase now emphasizes subheading every 200-300 words
+- Quality control checklist includes subheading distribution checks
+- Keyphrase must appear in 2-3 H2/H3 subheadings
+
+**Status:** Current
 
 ### v22 (2025-10-30)
 **Added:**
@@ -12,7 +25,7 @@
 - Town selection now requires randomization (no default Cherry Hill/Washington Twp)
 - Enhanced quality control for town variety
 
-**Status:** Current
+**Status:** Superseded by v23
 
 ### v21 (2025-10-23)
 **Added:**
@@ -135,6 +148,8 @@ Apply ALL guides simultaneously:
 - 2-5 total mentions (based on length)
 - SEO title under 60 characters
 - Meta description 150-156 characters
+- **Subheadings every 200-300 words maximum (CRITICAL - Yoast requirement)**
+- **Include keyphrase variations in 2-3 H2/H3 subheadings**
 - Categories and tags selection
 - Image file naming conventions
 - Image alt text strategy
@@ -172,6 +187,8 @@ Before delivering, verify against each guide:
 - [ ] Keyphrase appears 2-5 times
 - [ ] SEO title under 60 characters
 - [ ] Meta description 150-156 characters
+- [ ] **No text section exceeds 300 words without H2/H3 subheading**
+- [ ] **Keyphrase variations in 2-3 subheadings**
 - [ ] Categories selected (1-3)
 - [ ] Tags created (5-8, including focus_keyphrase, seo_title, meta_description)
 - [ ] Image filenames descriptive and SEO-friendly

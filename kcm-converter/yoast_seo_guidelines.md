@@ -222,7 +222,90 @@ Cherry Hill homeowner reviewing home equity line of credit options
 
 ---
 
-## 8. Content Optimization Checklist
+## 8. Subheading Distribution Requirements
+
+### The 300-Word Rule (CRITICAL)
+
+**Yoast Requirement:** No section of text should exceed 300 words without a subheading (H2 or H3).
+
+### Why This Matters
+- **Readability**: Long text blocks are hard to scan and overwhelming to readers
+- **SEO**: Google favors well-structured content with clear hierarchy
+- **User Experience**: Subheadings help readers find specific information quickly
+- **Yoast Scoring**: Violations trigger red/orange warnings in Yoast SEO plugin
+
+### Implementation Guidelines
+
+**Step 1: Calculate Section Length**
+- Count words between each H2/H3 heading
+- Include all paragraph text, lists, and quotes
+- Do NOT include heading text itself in count
+
+**Step 2: Add Subheadings Where Needed**
+- If any section exceeds 300 words → add H2 or H3 subheading
+- Place subheading at natural topic break (not mid-thought)
+- Ensure subheading is descriptive and relevant
+
+**Step 3: Maintain Hierarchy**
+- Main sections: H2 (larger topics)
+- Subsections within H2: H3 (supporting points)
+- Never skip levels (H2 → H4 ❌)
+
+### Examples
+
+**❌ VIOLATION (450 words without subheading):**
+```html
+<h2>Understanding Home Equity</h2>
+<p>Home equity is the difference between... [450 words of continuous text]</p>
+```
+
+**✅ COMPLIANT (sections under 300 words):**
+```html
+<h2>Understanding Home Equity</h2>
+<p>Home equity is the difference between... [200 words]</p>
+
+<h3>How to Calculate Your Equity</h3>
+<p>The calculation is straightforward... [150 words]</p>
+
+<h3>Factors That Affect Equity</h3>
+<p>Several factors influence... [200 words]</p>
+```
+
+### Keyphrase Integration in Subheadings
+
+**Requirement:** Include keyphrase variations in 2-3 H2/H3 tags
+
+**Example - Focus Keyphrase: "South Jersey home equity"**
+
+✅ **Good subheading distribution:**
+- H2: "Understanding Home Equity in South Jersey" (keyphrase variation ✓)
+- H3: "How to Calculate Your Equity" (no keyphrase)
+- H2: "South Jersey Home Equity Options for Homeowners" (keyphrase ✓)
+- H3: "Equity Loans vs. Lines of Credit" (no keyphrase)
+- H2: "Maximizing Your Property Value" (no keyphrase)
+
+**Result:** 2 of 5 subheadings include keyphrase = COMPLIANT ✓
+
+### Common Mistakes
+
+**Mistake 1: Too Many Subheadings**
+- Don't add H2/H3 every 100 words (feels choppy)
+- Target: 200-300 words per section (optimal range)
+
+**Mistake 2: Generic Subheadings**
+❌ "More Information"
+❌ "Additional Details"
+✅ "Common Equity Loan Mistakes to Avoid"
+✅ "South Jersey Market Trends"
+
+**Mistake 3: Keyword Stuffing in Headings**
+❌ "South Jersey Home Equity South Jersey"
+❌ "Home Equity Home Equity Home Equity"
+✅ "Leveraging Your Home Equity in South Jersey"
+
+---
+
+## 9. Content Optimization Checklist
 
 Before sending to WordPress, verify:
 
@@ -232,6 +315,8 @@ Before sending to WordPress, verify:
 - [ ] 1-3 categories selected (appropriate to content)
 - [ ] 5-10 tags selected (from existing tag list only)
 - [ ] Town tags match towns mentioned in content
+- [ ] **No text section exceeds 300 words without subheading (H2/H3)**
+- [ ] **Subheadings are descriptive and include keyphrase variations in 2-3 instances**
 - [ ] Focus keyphrase appears in:
   - [ ] SEO title
   - [ ] First paragraph
@@ -242,7 +327,7 @@ Before sending to WordPress, verify:
 
 ---
 
-## 9. Technical Implementation
+## 10. Technical Implementation
 
 ### WordPress REST API Fields
 
@@ -275,7 +360,7 @@ When sending to WordPress, include:
 
 ---
 
-## 10. Quality Assurance
+## 11. Quality Assurance
 
 ### Manual Review Points
 
@@ -286,13 +371,20 @@ After WordPress draft is created, verify:
    - ✅ Green light for SEO title length
    - ✅ Green light for meta description
    - ✅ Green light for keyphrase in content
+   - ✅ Green light for subheading distribution (no sections >300 words)
 
-2. **Content Quality**:
+2. **Content Structure**:
+   - No text section exceeds 300 words without H2/H3 subheading
+   - Subheadings are descriptive and scannable
+   - Heading hierarchy is maintained (no level skipping)
+   - Keyphrase variations appear in 2-3 subheadings
+
+3. **Content Quality**:
    - Towns mentioned feel natural and varied
    - Focus keyphrase doesn't feel forced
    - Images have descriptive, helpful alt text
 
-3. **No Word Stuffing**:
+4. **No Word Stuffing**:
    - Same towns don't appear in every article
    - Focus keyphrase density is natural (1-2% of content)
 
@@ -306,5 +398,32 @@ After WordPress draft is created, verify:
 
 ---
 
-**Last Updated**: 2025-10-30
-**Version**: 1.0
+## Version History
+
+### v1.1 (2025-10-31)
+**Added:**
+- Dedicated section on subheading distribution requirements (Section 8)
+- The 300-word rule with examples and implementation guidelines
+- Enhanced quality assurance checklist with subheading checks
+- Common mistakes to avoid with subheading structure
+
+**Changed:**
+- Content optimization checklist now includes explicit subheading requirements
+- Quality assurance section expanded to verify subheading distribution
+
+**Status:** Current
+
+### v1.0 (2025-10-30)
+**Created:**
+- Initial comprehensive Yoast SEO guidelines
+- Focus keyphrase requirements
+- SEO title and meta description standards
+- Categories, tags, and town randomization rules
+- Image alt text requirements
+
+**Status:** Superseded by v1.1
+
+---
+
+**Last Updated**: 2025-10-31
+**Version**: 1.1
