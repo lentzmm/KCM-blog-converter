@@ -739,7 +739,12 @@ Return ONLY valid JSON with these exact keys:
         return metadata
 
     except Exception as e:
-        logger.error(f"Failed to generate SEO metadata: {e}")
+        logger.error(f"❌ FAILED TO GENERATE SEO METADATA - USING FALLBACK GENERIC TAGS ❌")
+        logger.error(f"Error type: {type(e).__name__}")
+        logger.error(f"Error message: {str(e)}")
+        logger.error(f"This is why you're seeing generic categories and tags!")
+        import traceback
+        logger.error(f"Full traceback:\n{traceback.format_exc()}")
         return {
             "article_title": "South Jersey Real Estate Guide",
             "categories": ["Housing Market Updates"],
