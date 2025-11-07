@@ -943,7 +943,13 @@ def convert():
         ai_seo_metadata = generate_seo_metadata(original_html, converted_html)
 
         # Merge KCM recommendations with AI suggestions
-        seo_metadata = merge_taxonomy(kcm_taxonomy, ai_seo_metadata)
+        # FIXED: Pass the actual category/tag lists, not the whole dictionaries
+        seo_metadata = merge_taxonomy(
+            kcm_taxonomy.get('categories', []),
+            kcm_taxonomy.get('tags', []),
+            ai_seo_metadata.get('categories', []),
+            ai_seo_metadata.get('tags', [])
+        )
 
         # Preserve other AI-generated fields
         seo_metadata['article_title'] = ai_seo_metadata.get('article_title', '')
