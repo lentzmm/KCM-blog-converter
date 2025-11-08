@@ -270,7 +270,8 @@ Before publishing, verify all these requirements:
 - [ ] Flesch score: 75-85
 - [ ] Sentences <20 words: 75%+
 - [ ] Paragraphs under 150 words
-- [ ] Subheadings every 300 words
+- [ ] **Subheadings (H2/H3) every 200-300 words maximum (CRITICAL)**
+- [ ] No text section exceeds 300 words without subheading
 - [ ] Transition words used
 
 ---
@@ -697,7 +698,8 @@ Before publishing:
 - [ ] At least 1 internal link
 - [ ] Content length 1,200-1,800 words
 - [ ] Paragraphs under 150 words
-- [ ] Subheadings every 300 words
+- [ ] **Subheadings (H2/H3) every 200-300 words - no section exceeds 300 words**
+- [ ] Keyphrase variations appear in 2-3 subheadings
 
 **Yoast Signals:**
 - [ ] All critical green lights achieved
