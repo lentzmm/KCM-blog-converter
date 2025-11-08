@@ -750,7 +750,7 @@ Return ONLY valid JSON with these exact keys:
         return {
             "article_title": "South Jersey Real Estate Guide",
             "categories": ["Housing Market Updates"],
-            "tags": ["New Jersey real estate", "real estate market", "Home Buying Advice", "Selling Tips"],
+            "tags": ["Real Estate Market", "Home Prices", "Selling Tips", "Buying Tips"],  # Fixed to use exact tag names
             "focus_keyphrase": "South Jersey real estate",
             "seo_title": "South Jersey Real Estate Guide",
             "meta_description": "%%title%% %%sep%% %%sitename%% %%sep%% %%primary_category%%"
@@ -1040,6 +1040,10 @@ def send_to_wordpress():
 
         logger.info(f"Yoast SEO metadata: Focus Keyphrase = '{yoast_meta['yoast_wpseo_focuskw']}'")
 
+        # Log what we're about to send
+        logger.info(f"Categories to send: {categories}")
+        logger.info(f"Tags to send: {tags}")
+
         # Build n8n webhook payload with properly structured parameters
         payload = build_webhook_payload(
             title=title,
@@ -1051,17 +1055,29 @@ def send_to_wordpress():
             yoast_meta=yoast_meta
         )
 
-        # Store payload for potential retry
-        last_webhook_payload = payload
+        # CRITICAL: n8n workflow expects payload wrapped in 'body' key
+        # n8n accesses data as: $('Webhook').item.json.body.body.tags
+        # So we send: {'body': payload} which becomes body.body.tags in n8n
+        wrapped_payload = {'body': payload}
 
-        logger.info(f"Sending to n8n webhook: {len(converted_html)} chars, {len(seo_metadata.get('categories', []))} categories, {len(seo_metadata.get('tags', []))} tags")
+        # Log the actual payload structure (without the huge content field)
+        payload_debug = {k: v for k, v in payload.items() if k != 'content'}
+        payload_debug['content'] = f"<{len(payload.get('content', ''))} chars>"
+        logger.info(f"Webhook payload (inner): {payload_debug}")
+        logger.info(f"Categories (IDs): {payload.get('categories', [])}")
+        logger.info(f"Tags (IDs): {payload.get('tags', [])}")
+
+        # Store payload for potential retry
+        last_webhook_payload = wrapped_payload
+
+        logger.info(f"Sending to n8n webhook: {len(converted_html)} chars")
 
         # Send to n8n webhook (production)
         webhook_url = "https://n8n.srv1007195.hstgr.cloud/webhook/wordpress-publish"
 
         response = requests.post(
             webhook_url,
-            json=payload,
+            json=wrapped_payload,  # Send wrapped payload
             headers={'Content-Type': 'application/json'},
             timeout=30
         )
@@ -1069,10 +1085,12 @@ def send_to_wordpress():
         if response.status_code == 200:
             logger.info("✅ Successfully sent to WordPress")
 
+            # Get webhook response (needed regardless of Notion tracking)
+            webhook_response = response.json() if response.text else {}
+
             # Try to add conversion record to Notion (optional feature)
             try:
                 kcm_url = data.get('kcm_url', '')  # Original KCM URL from frontend
-                webhook_response = response.json() if response.text else {}
                 wordpress_post_id = webhook_response.get('post_id', 0)
                 wordpress_url = webhook_response.get('post_url', '')
 
