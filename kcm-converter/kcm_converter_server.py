@@ -1044,19 +1044,14 @@ def send_to_wordpress():
         logger.info(f"Categories to send: {categories}")
         logger.info(f"Tags to send: {tags}")
 
-        # TEMPORARY FIX: Send empty arrays like the old buggy code did
-        # This will confirm if n8n expects empty arrays
-        logger.warning("⚠️  TEMPORARY: Sending EMPTY categories/tags to test n8n compatibility")
-        categories_to_send = []
-        tags_to_send = []
-
         # Build n8n webhook payload with properly structured parameters
+        # Note: n8n expects category/tag NAMES, not IDs - conversion handled by n8n
         payload = build_webhook_payload(
             title=title,
             content=converted_html,
             excerpt='',  # Empty excerpt for now
-            categories=categories_to_send,  # Using empty arrays temporarily
-            tags=tags_to_send,  # Using empty arrays temporarily
+            categories=categories,
+            tags=tags,
             featured_media_id=featured_image_id,
             yoast_meta=yoast_meta
         )
