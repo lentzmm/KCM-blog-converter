@@ -750,7 +750,7 @@ Return ONLY valid JSON with these exact keys:
         return {
             "article_title": "South Jersey Real Estate Guide",
             "categories": ["Housing Market Updates"],
-            "tags": ["New Jersey real estate", "real estate market", "Home Buying Advice", "Selling Tips"],
+            "tags": ["Real Estate Market", "Home Prices", "Selling Tips", "Buying Tips"],  # Fixed to use exact tag names
             "focus_keyphrase": "South Jersey real estate",
             "seo_title": "South Jersey Real Estate Guide",
             "meta_description": "%%title%% %%sep%% %%sitename%% %%sep%% %%primary_category%%"
@@ -1040,6 +1040,10 @@ def send_to_wordpress():
 
         logger.info(f"Yoast SEO metadata: Focus Keyphrase = '{yoast_meta['yoast_wpseo_focuskw']}'")
 
+        # Log what we're about to send
+        logger.info(f"Categories to send: {categories}")
+        logger.info(f"Tags to send: {tags}")
+
         # Build n8n webhook payload with properly structured parameters
         payload = build_webhook_payload(
             title=title,
@@ -1051,10 +1055,15 @@ def send_to_wordpress():
             yoast_meta=yoast_meta
         )
 
+        # Log the actual payload structure (without the huge content field)
+        payload_debug = {k: v for k, v in payload.items() if k != 'content'}
+        payload_debug['content'] = f"<{len(payload.get('content', ''))} chars>"
+        logger.info(f"Webhook payload: {payload_debug}")
+
         # Store payload for potential retry
         last_webhook_payload = payload
 
-        logger.info(f"Sending to n8n webhook: {len(converted_html)} chars, {len(seo_metadata.get('categories', []))} categories, {len(seo_metadata.get('tags', []))} tags")
+        logger.info(f"Sending to n8n webhook: {len(converted_html)} chars, {len(categories)} categories, {len(tags)} tags")
 
         # Send to n8n webhook (production)
         webhook_url = "https://n8n.srv1007195.hstgr.cloud/webhook/wordpress-publish"
