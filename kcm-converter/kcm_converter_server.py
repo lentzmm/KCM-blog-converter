@@ -1078,10 +1078,12 @@ def send_to_wordpress():
         if response.status_code == 200:
             logger.info("✅ Successfully sent to WordPress")
 
+            # Get webhook response (needed regardless of Notion tracking)
+            webhook_response = response.json() if response.text else {}
+
             # Try to add conversion record to Notion (optional feature)
             try:
                 kcm_url = data.get('kcm_url', '')  # Original KCM URL from frontend
-                webhook_response = response.json() if response.text else {}
                 wordpress_post_id = webhook_response.get('post_id', 0)
                 wordpress_url = webhook_response.get('post_url', '')
 
