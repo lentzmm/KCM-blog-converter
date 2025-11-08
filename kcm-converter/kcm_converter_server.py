@@ -1045,7 +1045,6 @@ def send_to_wordpress():
         logger.info(f"Tags to send: {tags}")
 
         # Build n8n webhook payload with properly structured parameters
-        # Note: n8n expects category/tag NAMES, not IDs - conversion handled by n8n
         payload = build_webhook_payload(
             title=title,
             content=converted_html,
@@ -1056,22 +1055,29 @@ def send_to_wordpress():
             yoast_meta=yoast_meta
         )
 
+        # CRITICAL: n8n workflow expects payload wrapped in 'body' key
+        # n8n accesses data as: $('Webhook').item.json.body.body.tags
+        # So we send: {'body': payload} which becomes body.body.tags in n8n
+        wrapped_payload = {'body': payload}
+
         # Log the actual payload structure (without the huge content field)
         payload_debug = {k: v for k, v in payload.items() if k != 'content'}
         payload_debug['content'] = f"<{len(payload.get('content', ''))} chars>"
-        logger.info(f"Webhook payload: {payload_debug}")
+        logger.info(f"Webhook payload (inner): {payload_debug}")
+        logger.info(f"Categories (IDs): {payload.get('categories', [])}")
+        logger.info(f"Tags (IDs): {payload.get('tags', [])}")
 
         # Store payload for potential retry
-        last_webhook_payload = payload
+        last_webhook_payload = wrapped_payload
 
-        logger.info(f"Sending to n8n webhook: {len(converted_html)} chars, {len(categories)} categories, {len(tags)} tags")
+        logger.info(f"Sending to n8n webhook: {len(converted_html)} chars")
 
         # Send to n8n webhook (production)
         webhook_url = "https://n8n.srv1007195.hstgr.cloud/webhook/wordpress-publish"
 
         response = requests.post(
             webhook_url,
-            json=payload,
+            json=wrapped_payload,  # Send wrapped payload
             headers={'Content-Type': 'application/json'},
             timeout=30
         )

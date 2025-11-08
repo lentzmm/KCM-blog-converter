@@ -151,16 +151,13 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
     Returns:
         Dict ready for n8n webhook POST
     """
-    # IMPORTANT: n8n expects category/tag NAMES (strings), not IDs (integers)
-    # n8n's WordPress node handles the conversion from names to IDs
-    # Sending IDs causes: "Cannot read properties of undefined (reading 'tags')"
     payload = {
         'title': title,
         'content': content,
         'excerpt': excerpt,
         'status': 'draft',
-        'categories': categories if categories else [],  # Send names, not IDs
-        'tags': tags if tags else [],  # Send names, not IDs
+        'categories': get_category_ids(categories),
+        'tags': get_tag_ids(tags),
     }
 
     if featured_media_id:
