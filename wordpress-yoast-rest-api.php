@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Yoast SEO REST API Support
- * Description: Enables Yoast SEO fields (focus keyphrase, meta description, SEO title) to be updated via WordPress REST API. Also fixes featured_media permission bug.
- * Version: 1.1
+ * Description: Enables Yoast SEO fields (focus keyphrase, meta description, SEO title) to be updated via WordPress REST API. Uses register_rest_field() to bypass WordPress private meta restrictions. Also fixes featured_media permission bug.
+ * Version: 2.0
  * Author: Auto-generated for KCM Blog Converter
  *
  * INSTALLATION:
@@ -13,34 +13,72 @@
  * OR add the code below to your theme's functions.php file
  */
 
+/**
+ * CRITICAL FIX: Use register_rest_field() instead of register_post_meta()
+ *
+ * WordPress treats underscore-prefixed meta fields as "private" and blocks
+ * REST API updates even when registered with register_post_meta().
+ *
+ * Using register_rest_field() with update_callback gives us direct control
+ * and bypasses WordPress's private meta field restrictions.
+ */
 add_action('rest_api_init', 'register_yoast_meta_for_rest_api');
 
 function register_yoast_meta_for_rest_api() {
-    // Define the Yoast SEO meta fields we want to expose
-    $yoast_meta_fields = array(
-        '_yoast_wpseo_focuskw'      => 'Focus Keyphrase',
-        '_yoast_wpseo_title'         => 'SEO Title',
-        '_yoast_wpseo_metadesc'      => 'Meta Description',
-    );
-
-    // Register each field for REST API access
-    foreach ($yoast_meta_fields as $meta_key => $description) {
-        register_post_meta('post', $meta_key, array(
-            'show_in_rest' => true,
-            'single' => true,
+    // Register _yoast_wpseo_focuskw (Focus Keyphrase)
+    register_rest_field('post', '_yoast_wpseo_focuskw', array(
+        'get_callback' => function($post) {
+            return get_post_meta($post['id'], '_yoast_wpseo_focuskw', true);
+        },
+        'update_callback' => function($value, $post) {
+            if (!empty($value)) {
+                update_post_meta($post->ID, '_yoast_wpseo_focuskw', sanitize_text_field($value));
+                error_log("Yoast REST API: Updated _yoast_wpseo_focuskw = " . $value);
+            }
+        },
+        'schema' => array(
             'type' => 'string',
-            'description' => $description,
-            'auth_callback' => function() {
-                // Only allow users who can edit posts to update these fields
-                return current_user_can('edit_posts');
-            },
-            'sanitize_callback' => 'sanitize_text_field'
-        ));
-    }
+            'description' => 'Yoast SEO Focus Keyphrase',
+        ),
+    ));
+
+    // Register _yoast_wpseo_title (SEO Title)
+    register_rest_field('post', '_yoast_wpseo_title', array(
+        'get_callback' => function($post) {
+            return get_post_meta($post['id'], '_yoast_wpseo_title', true);
+        },
+        'update_callback' => function($value, $post) {
+            if (!empty($value)) {
+                update_post_meta($post->ID, '_yoast_wpseo_title', sanitize_text_field($value));
+                error_log("Yoast REST API: Updated _yoast_wpseo_title = " . $value);
+            }
+        },
+        'schema' => array(
+            'type' => 'string',
+            'description' => 'Yoast SEO Title',
+        ),
+    ));
+
+    // Register _yoast_wpseo_metadesc (Meta Description)
+    register_rest_field('post', '_yoast_wpseo_metadesc', array(
+        'get_callback' => function($post) {
+            return get_post_meta($post['id'], '_yoast_wpseo_metadesc', true);
+        },
+        'update_callback' => function($value, $post) {
+            if (!empty($value)) {
+                update_post_meta($post->ID, '_yoast_wpseo_metadesc', sanitize_textarea_field($value));
+                error_log("Yoast REST API: Updated _yoast_wpseo_metadesc = " . substr($value, 0, 50) . "...");
+            }
+        },
+        'schema' => array(
+            'type' => 'string',
+            'description' => 'Yoast SEO Meta Description',
+        ),
+    ));
 
     // Log when plugin is loaded (for debugging)
     if (defined('WP_DEBUG') && WP_DEBUG) {
-        error_log('Yoast SEO REST API Support: Meta fields registered for REST API');
+        error_log('Yoast SEO REST API Support: Meta fields registered via register_rest_field()');
     }
 }
 

@@ -1118,14 +1118,16 @@ def send_to_wordpress():
         logger.info(f"Categories (IDs): {payload.get('categories', [])}")
         logger.info(f"Tags (IDs): {payload.get('tags', [])}")
 
+        # CRITICAL v2.0: Yoast fields are now sent as TOP-LEVEL fields, not under 'meta'
+        logger.info(f"🔍 YOAST FIELDS (v2.0 - TOP-LEVEL):")
+        logger.info(f"  - _yoast_wpseo_focuskw: {payload.get('_yoast_wpseo_focuskw', 'NOT SET')}")
+        logger.info(f"  - _yoast_wpseo_title: {payload.get('_yoast_wpseo_title', 'NOT SET')}")
+        logger.info(f"  - _yoast_wpseo_metadesc: {payload.get('_yoast_wpseo_metadesc', 'NOT SET')[:80]}...")
+
         # CRITICAL: Log what we're actually sending to N8N
         logger.info(f"🔍 PAYLOAD INSPECTION:")
         logger.info(f"  - featured_media in payload: {('featured_media' in payload)}")
         logger.info(f"  - featured_media value: {payload.get('featured_media', 'NOT SET')}")
-        logger.info(f"  - meta in payload: {('meta' in payload)}")
-        if 'meta' in payload:
-            logger.info(f"  - meta fields: {list(payload['meta'].keys())}")
-            logger.info(f"  - meta values: {payload['meta']}")
 
         # Store payload for potential retry
         last_webhook_payload = wrapped_payload
@@ -1164,21 +1166,15 @@ def send_to_wordpress():
             logger.info(f"WordPress Response - Post ID: {webhook_response.get('id', 'NOT SET')}")
             logger.info(f"WordPress Response - Post URL: {webhook_response.get('link', 'NOT SET')}")
             logger.info(f"WordPress Response - Featured Media: {webhook_response.get('featured_media', 'NOT SET')}")
-            if 'meta' in webhook_response:
-                logger.info(f"WordPress Response - Meta fields: {list(webhook_response['meta'].keys())[:10]}")
-                # Check if Yoast fields are present AND log their actual values
-                yoast_fields_present = [k for k in webhook_response.get('meta', {}).keys() if 'yoast' in k.lower()]
-                if yoast_fields_present:
-                    logger.info(f"WordPress Response - Yoast fields found: {yoast_fields_present}")
-                    # CRITICAL: Log the actual VALUES of Yoast fields
-                    for field in ['_yoast_wpseo_focuskw', '_yoast_wpseo_title', '_yoast_wpseo_metadesc']:
-                        value = webhook_response.get('meta', {}).get(field, '')
-                        if value:
-                            logger.info(f"  ✅ {field}: '{value[:80]}...'")
-                        else:
-                            logger.error(f"  ❌ {field}: EMPTY or NOT SET")
+
+            # v2.0: Check TOP-LEVEL Yoast fields (register_rest_field creates top-level fields)
+            logger.info(f"WordPress Response - Yoast Fields (v2.0 - TOP-LEVEL):")
+            for field in ['_yoast_wpseo_focuskw', '_yoast_wpseo_title', '_yoast_wpseo_metadesc']:
+                value = webhook_response.get(field, '')
+                if value:
+                    logger.info(f"  ✅ {field}: '{value[:80]}...'")
                 else:
-                    logger.warning("⚠️  WordPress Response - NO Yoast fields in meta object!")
+                    logger.error(f"  ❌ {field}: EMPTY or NOT SET")
 
             # Try to add conversion record to Notion (optional feature)
             try:

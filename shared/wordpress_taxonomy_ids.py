@@ -163,29 +163,25 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
     if featured_media_id:
         payload['featured_media'] = featured_media_id
 
-    # CRITICAL: N8N workflow uses HTTP Request node (NOT WordPress node)
-    # WordPress REST API requires Yoast fields in the 'meta' object with underscore-prefixed keys
-    # Format: meta: { _yoast_wpseo_focuskw: '...', _yoast_wpseo_metadesc: '...', _yoast_wpseo_title: '...' }
+    # CRITICAL FIX v2.0: Send Yoast fields as TOP-LEVEL fields, not under 'meta'
+    # WordPress treats underscore-prefixed meta fields as "private" and blocks REST API updates.
+    # We now use register_rest_field() in the WordPress plugin, which registers these as
+    # top-level REST API fields with direct update_callback control.
+    # Format: { _yoast_wpseo_focuskw: '...', _yoast_wpseo_metadesc: '...', _yoast_wpseo_title: '...' }
     if yoast_meta:
-        meta_obj = {}
-
-        # Focus keyphrase
+        # Focus keyphrase - send as TOP-LEVEL field
         focuskw = yoast_meta.get('yoast_wpseo_focuskw', '').strip()
         if focuskw:
-            meta_obj['_yoast_wpseo_focuskw'] = focuskw
+            payload['_yoast_wpseo_focuskw'] = focuskw
 
-        # Meta description - don't send if it's a template string (starts with %%)
+        # Meta description - send as TOP-LEVEL field (don't send if it's a template string)
         metadesc = yoast_meta.get('yoast_wpseo_metadesc', '').strip()
         if metadesc and not metadesc.startswith('%%'):
-            meta_obj['_yoast_wpseo_metadesc'] = metadesc
+            payload['_yoast_wpseo_metadesc'] = metadesc
 
-        # SEO title
+        # SEO title - send as TOP-LEVEL field
         seo_title = yoast_meta.get('yoast_wpseo_title', '').strip()
         if seo_title:
-            meta_obj['_yoast_wpseo_title'] = seo_title
-
-        # Only add meta object if we have at least one field
-        if meta_obj:
-            payload['meta'] = meta_obj
+            payload['_yoast_wpseo_title'] = seo_title
 
     return payload
