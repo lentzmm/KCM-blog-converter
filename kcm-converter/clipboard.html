@@ -175,7 +175,15 @@
         <p class="subtitle">Convert KeepingCurrentMatters.com blogs to South Jersey localized content</p>
 
         <div class="section">
-            <div class="section-title">Step 1: Paste Original HTML</div>
+            <div class="section-title">Step 1: Original KCM Blog URL</div>
+            <div style="background:#e3f2fd; padding:15px; border-radius:4px; margin-bottom:10px; border:1px solid #2196F3;">
+                <strong>📍 Important:</strong> Paste the original KCM blog URL here for accurate Notion tracking. This should be the URL of the blog post you're converting (e.g., https://www.simplifyingthemarket.com/en/2025/09/24/your-article-slug/)
+            </div>
+            <input type="text" id="kcmUrlInput" placeholder="https://www.simplifyingthemarket.com/en/2025/09/24/your-article-slug/" style="width:100%; padding:12px; font-size:14px; border:2px solid #ddd; border-radius:4px; font-family:monospace;">
+        </div>
+
+        <div class="section">
+            <div class="section-title">Step 2: Paste Original HTML</div>
             <div id="paste" contenteditable="true" placeholder="Paste your KCM blog HTML here...">
 Paste your KCM blog HTML here...
             </div>
@@ -187,7 +195,7 @@ Paste your KCM blog HTML here...
         </div>
 
         <div class="section">
-            <div class="section-title">Step 1b: KCM Recommended Categories/Tags (Optional)</div>
+            <div class="section-title">Step 2b: KCM Recommended Categories/Tags (Optional)</div>
             <div style="background:#fffbea; padding:15px; border-radius:4px; margin-bottom:10px; border:1px solid #f0e68c;">
                 <strong>💡 Pro Tip:</strong> Copy and paste the KCM recommended categories/tags from the bottom of the KCM blog post. These will be merged with AI-generated suggestions.
             </div>
@@ -197,13 +205,13 @@ Paste KCM categories/tags here...
         </div>
 
         <div class="section">
-            <div class="section-title">Step 2: HTML Source (Optional)</div>
+            <div class="section-title">Step 3: HTML Source (Optional)</div>
             <textarea id="htmlOutput" placeholder="Original HTML will appear here..."></textarea>
         </div>
 
         <div class="output-container" id="outputContainer">
             <div class="section">
-                <div class="section-title">Step 3: SEO Metadata</div>
+                <div class="section-title">Step 4: SEO Metadata</div>
                 <div id="seoMetadata" style="background:#f8f9fa; padding:20px; border-radius:4px; border:2px solid #ddd;">
                     <div style="margin-bottom:15px;">
                         <strong>Title:</strong> <span id="articleTitle"></span>
@@ -227,7 +235,7 @@ Paste KCM categories/tags here...
             </div>
 
             <div class="section" id="imagesSection" style="display:none;">
-                <div class="section-title">Step 3b: Images</div>
+                <div class="section-title">Step 4b: Images</div>
                 <div style="background:#d4edda; padding:15px; border-radius:4px; margin-bottom:15px; border:1px solid #28a745;">
                     <strong>🚀 Automated Process (Recommended):</strong><br>
                     Click the button below to automatically download images from KCM, rename them with SEO-optimized names, and upload them to WordPress. The first image will be set as the featured image.
@@ -250,7 +258,7 @@ Paste KCM categories/tags here...
             </div>
 
             <div class="section">
-                <div class="section-title">Step 4: Converted HTML</div>
+                <div class="section-title">Step 5: Converted HTML</div>
                 <div class="button-group">
                     <button class="btn-download" onclick="downloadHTML()">📥 Download HTML</button>
                     <button class="btn-secondary" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
@@ -263,7 +271,7 @@ Paste KCM categories/tags here...
             <div id="wpStatus" style="display:none; margin-top:15px; padding:15px; border-radius:4px;"></div>
 
             <div class="section">
-                <div class="section-title">Step 5: Preview</div>
+                <div class="section-title">Step 6: Preview</div>
                 <div id="preview"></div>
             </div>
         </div>
@@ -330,10 +338,15 @@ Paste KCM categories/tags here...
                     throw new Error(data.error);
                 }
 
-                // Extract KCM URL from original HTML (for Notion tracking)
-                // Matches both keepingcurrentmatters.com and simplifyingthemarket.com
-                const urlMatch = originalHTML.match(/https?:\/\/(?:www\.)?(keepingcurrentmatters|simplifyingthemarket)\.com\/[^\s"'<>]+/i);
-                const kcmUrl = urlMatch ? urlMatch[0] : '';
+                // Get KCM URL from dedicated input field (for Notion tracking)
+                // This ensures we capture the actual source URL, not an internal link within the content
+                const kcmUrlInput = document.getElementById('kcmUrlInput');
+                const kcmUrl = kcmUrlInput ? kcmUrlInput.value.trim() : '';
+
+                // Log warning if KCM URL is missing
+                if (!kcmUrl) {
+                    console.warn('KCM URL not provided - Notion tracking may be incomplete');
+                }
 
                 // Store conversion results
                 currentConversion.html = data.converted_html;
