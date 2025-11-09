@@ -331,7 +331,8 @@ Paste KCM categories/tags here...
                 }
 
                 // Extract KCM URL from original HTML (for Notion tracking)
-                const urlMatch = originalHTML.match(/https?:\/\/(?:www\.)?keepingcurrentmatters\.com\/[^\s"'<>]+/i);
+                // Matches both keepingcurrentmatters.com and simplifyingthemarket.com
+                const urlMatch = originalHTML.match(/https?:\/\/(?:www\.)?(keepingcurrentmatters|simplifyingthemarket)\.com\/[^\s"'<>]+/i);
                 const kcmUrl = urlMatch ? urlMatch[0] : '';
 
                 // Store conversion results
