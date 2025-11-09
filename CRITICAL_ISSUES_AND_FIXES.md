@@ -124,26 +124,36 @@ FIXED in commit `6dc3099`
 
 ---
 
-## Issue 5: Notion KCM Slug Incorrect ❌
+## Issue 5: Notion KCM Slug Incorrect ✅ FIXED
 
-### Current Behavior
+### Root Cause
+The frontend (`clipboard.html`) was using a regex to extract ANY KCM/STM URL from the pasted HTML content. Since blog posts contain internal links to other KCM articles, the regex was grabbing the **FIRST internal link** instead of the actual source URL of the blog post being converted.
+
+### Evidence
+```javascript
+// OLD CODE (WRONG)
+const urlMatch = originalHTML.match(/https?:\/\/(?:www\.)?(keepingcurrentmatters|simplifyingthemarket)\.com\/[^\s"'<>]+/i);
+const kcmUrl = urlMatch ? urlMatch[0] : '';
+// Result: Captured first KCM link found in HTML (often an internal link)
+```
+
+### Fix Applied
+Added a dedicated input field for users to paste the original KCM blog URL:
+
+**New UI (Step 1):**
+- Input field: "Original KCM Blog URL"
+- User pastes source URL: `https://www.simplifyingthemarket.com/en/2025/09/24/your-article-slug/`
+- JavaScript reads from input field instead of parsing HTML
+
+**Backend slug extraction also fixed:**
 ```python
-kcm_slug = urlparse(kcm_url).path.rstrip('/')
-# Result: /en/2025/09/24/do-you-know-how-much-your-house-is-really-worth
+# Extract just the slug (last segment of path)
+kcm_slug = kcm_path.split('/')[-1]  # "your-article-slug"
+# Instead of full path: "/en/2025/09/24/your-article-slug/"
 ```
 
-### Expected Behavior
-You probably want just the slug part:
-```
-do-you-know-how-much-your-house-is-really-worth
-```
-
-### Required Fix
-```python
-kcm_slug = urlparse(kcm_url).path.rstrip('/').split('/')[-1] if kcm_url else ''
-```
-
-This extracts only the last segment of the path.
+### Status
+✅ **FIXED** - User now provides source URL explicitly, ensuring accurate Notion tracking
 
 ---
 
