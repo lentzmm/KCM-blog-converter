@@ -146,7 +146,7 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
         categories: List of category names
         tags: List of tag names
         featured_media_id: WordPress media ID for featured image
-        yoast_meta: Dict with Yoast SEO metadata
+        yoast_meta: Dict with Yoast SEO metadata (yoast_wpseo_focuskw, yoast_wpseo_title, yoast_wpseo_metadesc)
 
     Returns:
         Dict ready for n8n webhook POST
