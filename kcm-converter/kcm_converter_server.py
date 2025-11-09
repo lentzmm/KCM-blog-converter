@@ -700,8 +700,15 @@ Generate the following SEO metadata in JSON format:
    - MUST use tags from the list above - do NOT create new tags
    - Include topic tags that match the content (e.g., "Home Prices", "Interest Rates")
    - Include demographic tags if relevant (e.g., "First Time Home Buyers", "Move-up Buyers")
-   - Include specific town tags ONLY if that town is explicitly mentioned
    - Do NOT include date tags - those will be auto-generated
+
+   **TOWN TAG RULES (VERY STRICT):**
+   - DEFAULT for general market articles: NO town tags at all
+   - ONLY tag a town if the article is SPECIFICALLY ABOUT that town's market/trends
+   - Town must appear 4+ times AND be central to the article's topic
+   - Casual mentions or examples do NOT count - do not tag them
+   - If the article mentions multiple towns casually (like examples), tag NONE of them
+   - When in doubt: DO NOT tag it
 
 4. **focus_keyphrase**: The primary SEO keyword phrase (3-6 words) - should include "South Jersey" or specific town
 
