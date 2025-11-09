@@ -169,17 +169,24 @@ When generating localized content:
    - Starter homes → Mount Laurel, Deptford, Clayton
    - Rural/affordable → Gloucester County towns (Mullica Hill, Pitman)
 
-#### Tagging Rules
-- **ONLY tag towns that are mentioned** in the article text
-- If Cherry Hill is mentioned → tag it
-- If Cherry Hill is NOT mentioned → do NOT tag it
-- Count mentions: Town must appear at least 2 times to warrant a tag
+#### Tagging Rules (VERY STRICT)
+**CRITICAL: DO NOT tag towns unless the article is SPECIFICALLY ABOUT that town**
+
+- **Default for general market articles**: NO town tags at all
+- **Only tag a town if**: The article is focused on that specific town's market/trends
+- **Casual mentions don't count**: If a town is just used as an example, do NOT tag it
+- **Multiple mentions required**: Town must appear 4+ times AND be central to the article
+- **When in doubt**: Don't tag it
 
 ### Example Implementation
 ```
-Article mentions: Haddonfield (3x), Moorestown (2x), Washington Twp (1x)
-✅ Tags: Haddonfield, Moorestown
-❌ Tags: Washington Twp (only mentioned once)
+Article about general South Jersey equity, mentions Pitman (1x), Voorhees (1x), Mount Laurel (1x) as examples
+✅ Tags: (none - it's not ABOUT any specific town)
+❌ Tags: Pitman, Voorhees, Mount Laurel (these are just casual mentions)
+
+Article specifically about Cherry Hill market trends, mentions Cherry Hill (8x)
+✅ Tags: Cherry Hill (article is specifically ABOUT Cherry Hill)
+❌ Tags: Collingswood (even if mentioned once as comparison)
 ```
 
 ---

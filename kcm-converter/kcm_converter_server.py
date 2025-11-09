@@ -1039,6 +1039,27 @@ def send_to_wordpress():
             logger.info(f"Updating {len(image_url_mapping)} image URLs in HTML with WordPress URLs")
             converted_html = convert_image_urls(converted_html, image_url_mapping)
 
+            # Remove first image from post content (it's the featured image)
+            # Match first <img> tag (including any attributes before/after src)
+            first_img_pattern = r'<img\s+[^>]*?src=["\'][^"\']+["\'][^>]*?>'
+            match = re.search(first_img_pattern, converted_html, re.IGNORECASE)
+            if match:
+                # Also remove surrounding <br> tags if present
+                img_with_breaks = re.sub(
+                    r'<br\s*/?>\s*' + re.escape(match.group(0)) + r'\s*<br\s*/?>',
+                    '',
+                    converted_html,
+                    count=1,
+                    flags=re.IGNORECASE
+                )
+                if img_with_breaks != converted_html:
+                    converted_html = img_with_breaks
+                    logger.info("Removed first image (with surrounding breaks) from post content - it's the featured image")
+                else:
+                    # No breaks found, just remove the image
+                    converted_html = converted_html.replace(match.group(0), '', 1)
+                    logger.info("Removed first image from post content - it's the featured image")
+
         # Extract fields from seo_metadata for webhook payload
         title = seo_metadata.get('article_title', 'Untitled')
         categories = seo_metadata.get('categories', [])
