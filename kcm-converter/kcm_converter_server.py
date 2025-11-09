@@ -1099,7 +1099,14 @@ def send_to_wordpress():
             logger.info("✅ Successfully sent to WordPress")
 
             # Get webhook response (needed regardless of Notion tracking)
-            webhook_response = response.json() if response.text else {}
+            # n8n may return an array or object - handle both
+            webhook_response_raw = response.json() if response.text else {}
+            if isinstance(webhook_response_raw, list) and len(webhook_response_raw) > 0:
+                webhook_response = webhook_response_raw[0]  # Extract first item from array
+            elif isinstance(webhook_response_raw, dict):
+                webhook_response = webhook_response_raw
+            else:
+                webhook_response = {}
 
             # Try to add conversion record to Notion (optional feature)
             try:
