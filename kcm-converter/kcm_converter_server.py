@@ -544,31 +544,33 @@ def extract_images(original_html: str, converted_html: str, focus_keyphrase: str
     slug = extract_article_slug(converted_html)
     logger.info(f"Extracted slug for images: {slug}")
 
-    # Extract primary topic keywords for image SEO
-    # Look for key real estate terms in the title/slug
-    geo_keywords = ['south-jersey', 'nj', 'gloucester', 'camden', 'burlington']
-    topic_keywords = ['home', 'homes', 'house', 'real-estate', 'buyer', 'buyers', 'seller', 'sellers',
-                     'market', 'equity', 'mortgage', 'property', 'properties', 'downsizing',
-                     'first-time', 'price', 'prices', 'value', 'sell', 'buy', 'buying', 'selling']
+    # Extract meaningful topic words from focus keyphrase (avoiding location words)
+    # This creates unique filenames and avoids duplicates like "home-south-jersey-guide.png"
+    location_words = ['south', 'jersey', 'nj', 'gloucester', 'camden', 'burlington',
+                      'salem', 'cumberland', 'county', 'new', 'township', 'twp']
 
-    # Find geo keyword in slug
-    geo_term = next((kw for kw in geo_keywords if kw in slug), 'south-jersey')
+    if focus_keyphrase:
+        # Split keyphrase into words and remove location words
+        keyphrase_words = [w.strip().lower() for w in focus_keyphrase.split()]
+        topic_words = [w for w in keyphrase_words if w not in location_words and len(w) > 2]
 
-    # Find topic keyword in slug (try to find first match)
-    topic_term = next((kw for kw in topic_keywords if kw in slug), None)
-
-    # If no topic keyword found in slug, extract from first few words of slug
-    if not topic_term:
-        # Use first 2-3 meaningful words from slug as topic
-        slug_words = [w for w in slug.split('-') if w not in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for']]
-        if len(slug_words) >= 2:
-            topic_term = '-'.join(slug_words[:2])
-        elif len(slug_words) == 1:
-            topic_term = slug_words[0]
+        # Take first 3 meaningful words for filename uniqueness
+        if len(topic_words) >= 3:
+            topic_term = '-'.join(topic_words[:3])
+        elif len(topic_words) >= 2:
+            topic_term = '-'.join(topic_words[:2])
+        elif len(topic_words) >= 1:
+            topic_term = topic_words[0]
         else:
-            topic_term = 'real-estate'
+            # Fallback to slug-based extraction
+            slug_words = [w for w in slug.split('-') if w not in location_words and len(w) > 2]
+            topic_term = '-'.join(slug_words[:3]) if len(slug_words) >= 3 else '-'.join(slug_words[:2]) if len(slug_words) >= 2 else 'real-estate'
+    else:
+        # No keyphrase - extract from slug
+        slug_words = [w for w in slug.split('-') if w not in location_words and len(w) > 2]
+        topic_term = '-'.join(slug_words[:3]) if len(slug_words) >= 3 else '-'.join(slug_words[:2]) if len(slug_words) >= 2 else 'real-estate'
 
-    logger.info(f"Topic term for images: {topic_term}, Geo term: {geo_term}")
+    logger.info(f"Topic term for images (from keyphrase): {topic_term}")
 
     # Find all img tags
     img_pattern = r'<img\s+([^>]*?)src="([^"]+)"([^>]*?)>'
@@ -597,14 +599,15 @@ def extract_images(original_html: str, converted_html: str, focus_keyphrase: str
         filename = os.path.basename(parsed.path)
         ext = os.path.splitext(filename)[1] if '.' in filename else '.png'
 
-        # Generate SEO/GEO optimized filename
-        # Format: {topic}-{geo}-{descriptor}.ext
-        # Example: home-equity-south-jersey-guide.png
-        # Use topic + geo + descriptor
+        # Generate unique SEO-optimized filename
+        # Uses 3 meaningful words from focus keyphrase (excluding location words)
+        # Format: {topic-word-1}-{topic-word-2}-{topic-word-3}-{index}.ext
+        # Example: first-time-buyer-guide.png, home-equity-tips-2.png
+        # This avoids duplicates like "home-south-jersey-guide.png"
         if index == 1:
-            suggested_filename = f"{topic_term}-{geo_term}-guide{ext}"
+            suggested_filename = f"{topic_term}-guide{ext}"
         else:
-            suggested_filename = f"{topic_term}-{geo_term}-{index}{ext}"
+            suggested_filename = f"{topic_term}-{index}{ext}"
 
         wordpress_path = f"/wp-content/uploads/{year}/{month}/{suggested_filename}"
 
@@ -1014,6 +1017,16 @@ def send_to_wordpress():
 
         logger.info("Building webhook payload for WordPress...")
 
+        # Check if HTML contains images but none were uploaded
+        if '<img' in converted_html and not uploaded_images:
+            logger.warning("⚠️  HTML contains images but no images were uploaded to WordPress!")
+            return jsonify({
+                'error': 'Images not uploaded',
+                'message': 'The converted HTML contains images, but you have not uploaded them to WordPress yet. Please upload images first using the "Upload Images to WordPress" button, then try sending to WordPress again.',
+                'contains_images': True,
+                'uploaded_count': 0
+            }), 400
+
         # Use featured image from uploaded images if not provided and images were uploaded
         if not featured_image_id and uploaded_images:
             featured_image_id = uploaded_images[0]['wordpress_id']
@@ -1103,6 +1116,13 @@ def send_to_wordpress():
                     all_kcm_links = extract_kcm_links(converted_html)
                     internal_links_count = len(all_kcm_links)
 
+                    # Ensure categories and tags are lists of strings (not IDs)
+                    # They should already be lists of category/tag names from seo_metadata
+                    category_list = categories if isinstance(categories, list) else []
+                    tag_list = tags if isinstance(tags, list) else []
+
+                    logger.info(f"Notion tracking - Categories: {category_list}, Tags: {tag_list}")
+
                     # Add to Notion conversion tracking database
                     notion_page_id = add_conversion_record(
                         notion_client=notion_client,
@@ -1113,8 +1133,8 @@ def send_to_wordpress():
                         wordpress_post_id=wordpress_post_id,
                         article_title=title,
                         focus_keyphrase=seo_metadata.get('focus_keyphrase', ''),
-                        categories=categories,
-                        tags=tags,
+                        categories=category_list,
+                        tags=tag_list,
                         seo_title=seo_metadata.get('seo_title', ''),
                         meta_description=seo_metadata.get('meta_description', ''),
                         internal_links_count=internal_links_count,
