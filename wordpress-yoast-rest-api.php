@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Yoast SEO REST API Support
- * Description: Enables Yoast SEO fields (focus keyphrase, meta description, SEO title) to be updated via WordPress REST API
- * Version: 1.0
+ * Description: Enables Yoast SEO fields (focus keyphrase, meta description, SEO title) to be updated via WordPress REST API. Also fixes featured_media permission bug.
+ * Version: 1.1
  * Author: Auto-generated for KCM Blog Converter
  *
  * INSTALLATION:
@@ -61,6 +61,35 @@ function yoast_rest_api_admin_notice() {
 }
 
 /**
+ * FIX: Featured Media Permission Issue
+ *
+ * WordPress REST API has a known bug where featured_media returns 0 due to
+ * permission issues with attachment posts. This filter ensures all attachments
+ * are readable by users with edit_posts capability.
+ */
+add_filter('user_has_cap', 'fix_featured_media_rest_api_permissions', 10, 4);
+
+function fix_featured_media_rest_api_permissions($allcaps, $caps, $args, $user) {
+    // Only apply to read_post capability checks
+    if (!isset($args[0]) || $args[0] !== 'read_post') {
+        return $allcaps;
+    }
+
+    // Get the post ID being checked
+    $post_id = isset($args[2]) ? $args[2] : 0;
+    if (!$post_id) {
+        return $allcaps;
+    }
+
+    // If it's an attachment and user can edit posts, grant read access
+    if (get_post_type($post_id) === 'attachment' && isset($allcaps['edit_posts']) && $allcaps['edit_posts']) {
+        $allcaps['read_post'] = true;
+    }
+
+    return $allcaps;
+}
+
+/**
  * TESTING THE PLUGIN
  *
  * After activating this plugin, test with this REST API call:
@@ -75,6 +104,7 @@ function yoast_rest_api_admin_notice() {
  *   "title": "Test Post",
  *   "content": "<p>Test content</p>",
  *   "status": "draft",
+ *   "featured_media": 12345,
  *   "meta": {
  *     "_yoast_wpseo_focuskw": "test keyphrase",
  *     "_yoast_wpseo_title": "Test SEO Title",
@@ -82,10 +112,11 @@ function yoast_rest_api_admin_notice() {
  *   }
  * }
  *
- * Then check the response - it should include the meta fields:
+ * Then check the response - it should include the meta fields AND featured_media:
  * {
  *   "id": 123,
  *   "title": "Test Post",
+ *   "featured_media": 12345,
  *   "meta": {
  *     "_yoast_wpseo_focuskw": "test keyphrase",
  *     "_yoast_wpseo_title": "Test SEO Title",
