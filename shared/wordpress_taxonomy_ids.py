@@ -146,7 +146,7 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
         categories: List of category names
         tags: List of tag names
         featured_media_id: WordPress media ID for featured image
-        yoast_meta: Dict with Yoast SEO metadata
+        yoast_meta: Dict with Yoast SEO metadata (yoast_wpseo_focuskw, yoast_wpseo_title, yoast_wpseo_metadesc)
 
     Returns:
         Dict ready for n8n webhook POST
@@ -163,7 +163,11 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
     if featured_media_id:
         payload['featured_media'] = featured_media_id
 
+    # n8n expects Yoast fields at the root level with specific field names
+    # n8n accesses: body.body.yoast_focus_keyword and body.body.yoast_meta_description
     if yoast_meta:
-        payload['yoast_meta'] = yoast_meta
+        payload['yoast_focus_keyword'] = yoast_meta.get('yoast_wpseo_focuskw', '')
+        payload['yoast_meta_description'] = yoast_meta.get('yoast_wpseo_metadesc', '')
+        payload['yoast_title'] = yoast_meta.get('yoast_wpseo_title', '')
 
     return payload
