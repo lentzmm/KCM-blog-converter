@@ -1108,6 +1108,12 @@ def send_to_wordpress():
         logger.info(f"Categories (IDs): {payload.get('categories', [])}")
         logger.info(f"Tags (IDs): {payload.get('tags', [])}")
 
+        # CRITICAL: Log featured_media separately for debugging
+        if 'featured_media' in payload:
+            logger.info(f"✅ Featured Media ID in payload: {payload['featured_media']}")
+        else:
+            logger.warning(f"⚠️  Featured Media ID NOT in payload (featured_image_id was: {featured_image_id})")
+
         # Store payload for potential retry
         last_webhook_payload = wrapped_payload
 
