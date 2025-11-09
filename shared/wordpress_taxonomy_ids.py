@@ -167,10 +167,25 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
     # WordPress REST API requires Yoast fields in the 'meta' object with underscore-prefixed keys
     # Format: meta: { _yoast_wpseo_focuskw: '...', _yoast_wpseo_metadesc: '...', _yoast_wpseo_title: '...' }
     if yoast_meta:
-        payload['meta'] = {
-            '_yoast_wpseo_focuskw': yoast_meta.get('yoast_wpseo_focuskw', ''),
-            '_yoast_wpseo_metadesc': yoast_meta.get('yoast_wpseo_metadesc', ''),
-            '_yoast_wpseo_title': yoast_meta.get('yoast_wpseo_title', '')
-        }
+        meta_obj = {}
+
+        # Focus keyphrase
+        focuskw = yoast_meta.get('yoast_wpseo_focuskw', '').strip()
+        if focuskw:
+            meta_obj['_yoast_wpseo_focuskw'] = focuskw
+
+        # Meta description - don't send if it's a template string (starts with %%)
+        metadesc = yoast_meta.get('yoast_wpseo_metadesc', '').strip()
+        if metadesc and not metadesc.startswith('%%'):
+            meta_obj['_yoast_wpseo_metadesc'] = metadesc
+
+        # SEO title
+        seo_title = yoast_meta.get('yoast_wpseo_title', '').strip()
+        if seo_title:
+            meta_obj['_yoast_wpseo_title'] = seo_title
+
+        # Only add meta object if we have at least one field
+        if meta_obj:
+            payload['meta'] = meta_obj
 
     return payload
