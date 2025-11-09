@@ -1111,8 +1111,12 @@ def send_to_wordpress():
             # Try to add conversion record to Notion (optional feature)
             try:
                 kcm_url = data.get('kcm_url', '')  # Original KCM URL from frontend
-                wordpress_post_id = webhook_response.get('post_id', 0)
-                wordpress_url = webhook_response.get('post_url', '')
+
+                # WordPress REST API returns 'id' and 'link', not 'post_id' and 'post_url'
+                wordpress_post_id = webhook_response.get('id', 0)
+                wordpress_url = webhook_response.get('link', '')
+
+                logger.info(f"Notion tracking data - KCM URL: {kcm_url}, WP Post ID: {wordpress_post_id}, WP URL: {wordpress_url}")
 
                 if kcm_url and wordpress_post_id and wordpress_url:
                     # Extract slugs from URLs
