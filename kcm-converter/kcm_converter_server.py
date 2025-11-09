@@ -1147,9 +1147,10 @@ def send_to_wordpress():
                 logger.info(f"Notion tracking data - KCM URL: {kcm_url}, WP Post ID: {wordpress_post_id}, WP URL: {wordpress_url}")
 
                 if kcm_url and wordpress_post_id and wordpress_url:
-                    # Extract slugs from URLs
-                    kcm_slug = urlparse(kcm_url).path.strip('/').split('/')[-1] if kcm_url else ''
-                    wordpress_slug = urlparse(wordpress_url).path.strip('/').split('/')[-1] if wordpress_url else ''
+                    # Extract slugs from URLs (full path for matching across different domains)
+                    # Example: /en/2025/09/18/do-you-know-how-much-your-house-is-really-worth/
+                    kcm_slug = urlparse(kcm_url).path.rstrip('/') if kcm_url else ''
+                    wordpress_slug = urlparse(wordpress_url).path.rstrip('/') if wordpress_url else ''
 
                     # Count internal links
                     all_kcm_links = extract_kcm_links(converted_html)

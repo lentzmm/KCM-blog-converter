@@ -48,19 +48,22 @@ def get_url_mappings(notion_client) -> Dict[str, str]:
         for page in response.get('results', []):
             props = page.get('properties', {})
 
-            # Extract KCM URL
-            kcm_url_prop = props.get('KCM URL', {})
-            kcm_url = kcm_url_prop.get('url')
+            # Extract KCM Slug (for matching across different domains)
+            kcm_slug_prop = props.get('KCM Slug', {})
+            kcm_slug_list = kcm_slug_prop.get('rich_text', [])
+            kcm_slug = kcm_slug_list[0].get('text', {}).get('content', '') if kcm_slug_list else ''
 
             # Extract WordPress URL
             wp_url_prop = props.get('WordPress URL', {})
             wp_url = wp_url_prop.get('url')
 
-            if kcm_url and wp_url:
-                url_mapping[kcm_url] = wp_url
-                logger.info(f"Mapped: {kcm_url} -> {wp_url}")
+            # Map by SLUG instead of full URL (so it works across all KCM domains)
+            # This allows matching even if domain changes (keepingcurrentmatters.com -> mykcm.com)
+            if kcm_slug and wp_url:
+                url_mapping[kcm_slug] = wp_url
+                logger.info(f"Mapped: {kcm_slug} -> {wp_url}")
 
-        logger.info(f"Loaded {len(url_mapping)} URL mappings from Notion")
+        logger.info(f"Loaded {len(url_mapping)} slug-based URL mappings from Notion")
         return url_mapping
 
     except Exception as e:

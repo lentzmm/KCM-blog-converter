@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 def extract_kcm_links(html: str) -> List[str]:
     """
     Extract all KCM internal links from HTML
+    Supports multiple KCM domains: keepingcurrentmatters.com, simplifyingthemarket.com, mykcm.com
 
     Args:
         html: HTML content
@@ -21,8 +22,9 @@ def extract_kcm_links(html: str) -> List[str]:
     Returns:
         List of unique KCM URLs found
     """
-    # Pattern to find <a href="...keepingcurrentmatters.com...">
-    pattern = r'<a[^>]+href=["\']([^"\']*keepingcurrentmatters\.com[^"\']*)["\']'
+    # Pattern to find <a href="..."> for any KCM domain
+    # Matches keepingcurrentmatters.com, simplifyingthemarket.com, mykcm.com
+    pattern = r'<a[^>]+href=["\']([^"\']*(?:keepingcurrentmatters|simplifyingthemarket|mykcm)\.com[^"\']*)["\']'
     matches = re.findall(pattern, html, re.IGNORECASE)
 
     # Normalize URLs (remove fragments, query params for matching)
@@ -43,10 +45,12 @@ def extract_kcm_links(html: str) -> List[str]:
 def replace_kcm_links(html: str, url_mapping: Dict[str, str]) -> Tuple[str, Dict]:
     """
     Replace KCM internal links with WordPress links
+    Uses SLUG-based matching (not full URL) to work across different KCM domains
 
     Args:
         html: HTML content with potential KCM links
-        url_mapping: Dictionary mapping KCM URLs to WordPress URLs
+        url_mapping: Dictionary mapping KCM SLUGS (paths) to WordPress URLs
+                     Example: {'/en/2025/09/18/article-slug': 'https://mikesellsnj.com/article-slug/'}
 
     Returns:
         Tuple of (updated_html, stats_dict)
@@ -69,19 +73,17 @@ def replace_kcm_links(html: str, url_mapping: Dict[str, str]) -> Tuple[str, Dict
     replaced_count = 0
     not_found = []
 
-    # Normalize the mapping keys for matching
-    normalized_mapping = {}
-    for kcm_url, wp_url in url_mapping.items():
-        parsed = urlparse(kcm_url)
-        normalized_key = f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip('/')
-        normalized_mapping[normalized_key] = wp_url
-
     # Replace each KCM link
     updated_html = html
 
     for kcm_url in kcm_links:
-        if kcm_url in normalized_mapping:
-            wp_url = normalized_mapping[kcm_url]
+        # Extract slug (path) from the KCM URL for matching
+        parsed = urlparse(kcm_url)
+        kcm_slug = parsed.path.rstrip('/')
+
+        # Match by slug (not full URL) - this works across different domains
+        if kcm_slug in url_mapping:
+            wp_url = url_mapping[kcm_slug]
 
             # Replace all variations of this URL (with/without trailing slash, http/https)
             # Pattern matches the URL in href attributes
@@ -108,7 +110,7 @@ def replace_kcm_links(html: str, url_mapping: Dict[str, str]) -> Tuple[str, Dict
 
         else:
             not_found.append(kcm_url)
-            logger.warning(f"⚠️  No WordPress URL found for: {kcm_url}")
+            logger.warning(f"⚠️  No WordPress URL found for slug: {kcm_slug} (from {kcm_url})")
 
     stats = {
         "replaced": replaced_count,
