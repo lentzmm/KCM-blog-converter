@@ -45,3 +45,6 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Archives (WordPress plugin zips, etc.)
+*.zip
