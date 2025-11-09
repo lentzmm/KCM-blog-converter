@@ -1166,10 +1166,17 @@ def send_to_wordpress():
             logger.info(f"WordPress Response - Featured Media: {webhook_response.get('featured_media', 'NOT SET')}")
             if 'meta' in webhook_response:
                 logger.info(f"WordPress Response - Meta fields: {list(webhook_response['meta'].keys())[:10]}")
-                # Check if Yoast fields are present
+                # Check if Yoast fields are present AND log their actual values
                 yoast_fields_present = [k for k in webhook_response.get('meta', {}).keys() if 'yoast' in k.lower()]
                 if yoast_fields_present:
                     logger.info(f"WordPress Response - Yoast fields found: {yoast_fields_present}")
+                    # CRITICAL: Log the actual VALUES of Yoast fields
+                    for field in ['_yoast_wpseo_focuskw', '_yoast_wpseo_title', '_yoast_wpseo_metadesc']:
+                        value = webhook_response.get('meta', {}).get(field, '')
+                        if value:
+                            logger.info(f"  ✅ {field}: '{value[:80]}...'")
+                        else:
+                            logger.error(f"  ❌ {field}: EMPTY or NOT SET")
                 else:
                     logger.warning("⚠️  WordPress Response - NO Yoast fields in meta object!")
 
