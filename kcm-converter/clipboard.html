@@ -175,11 +175,11 @@
         <p class="subtitle">Convert KeepingCurrentMatters.com blogs to South Jersey localized content</p>
 
         <div class="section">
-            <div class="section-title">Step 1: Original KCM Blog URL</div>
+            <div class="section-title">Step 1: Original KCM Blog URL (Optional)</div>
             <div style="background:#e3f2fd; padding:15px; border-radius:4px; margin-bottom:10px; border:1px solid #2196F3;">
-                <strong>📍 Important:</strong> Paste the original KCM blog URL here for accurate Notion tracking. This should be the URL of the blog post you're converting (e.g., https://www.simplifyingthemarket.com/en/2025/09/24/your-article-slug/)
+                <strong>📍 Auto-Detection:</strong> The tool will automatically extract the source URL from the HTML if you copy the full page source (Ctrl+U → Ctrl+A → Copy). If that doesn't work, paste the URL here manually for accurate Notion tracking.
             </div>
-            <input type="text" id="kcmUrlInput" placeholder="https://www.simplifyingthemarket.com/en/2025/09/24/your-article-slug/" style="width:100%; padding:12px; font-size:14px; border:2px solid #ddd; border-radius:4px; font-family:monospace;">
+            <input type="text" id="kcmUrlInput" placeholder="Optional: https://www.simplifyingthemarket.com/en/2025/09/24/your-article-slug/" style="width:100%; padding:12px; font-size:14px; border:2px solid #ddd; border-radius:4px; font-family:monospace;">
         </div>
 
         <div class="section">
@@ -338,14 +338,45 @@ Paste KCM categories/tags here...
                     throw new Error(data.error);
                 }
 
-                // Get KCM URL from dedicated input field (for Notion tracking)
-                // This ensures we capture the actual source URL, not an internal link within the content
-                const kcmUrlInput = document.getElementById('kcmUrlInput');
-                const kcmUrl = kcmUrlInput ? kcmUrlInput.value.trim() : '';
+                // Extract KCM URL from pasted HTML (for Notion tracking)
+                // Try multiple methods to find the SOURCE URL (not internal links)
+                let kcmUrl = '';
 
-                // Log warning if KCM URL is missing
+                // Method 1: Check for canonical URL (most reliable)
+                const canonicalMatch = originalHTML.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i) ||
+                                      originalHTML.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["']canonical["']/i);
+                if (canonicalMatch) {
+                    kcmUrl = canonicalMatch[1];
+                    console.log('✓ Found canonical URL:', kcmUrl);
+                }
+
+                // Method 2: Check for Open Graph URL
                 if (!kcmUrl) {
-                    console.warn('KCM URL not provided - Notion tracking may be incomplete');
+                    const ogUrlMatch = originalHTML.match(/<meta[^>]+property=["']og:url["'][^>]+content=["']([^"']+)["']/i) ||
+                                      originalHTML.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:url["']/i);
+                    if (ogUrlMatch) {
+                        kcmUrl = ogUrlMatch[1];
+                        console.log('✓ Found og:url:', kcmUrl);
+                    }
+                }
+
+                // Method 3: Check manual input field (fallback)
+                if (!kcmUrl) {
+                    const kcmUrlInput = document.getElementById('kcmUrlInput');
+                    kcmUrl = kcmUrlInput ? kcmUrlInput.value.trim() : '';
+                    if (kcmUrl) {
+                        console.log('✓ Using manual URL input:', kcmUrl);
+                    }
+                }
+
+                // Log warning if still no URL found
+                if (!kcmUrl) {
+                    console.warn('⚠️ Could not extract source URL from HTML');
+                    console.warn('💡 TIP: When copying from KCM blog:');
+                    console.warn('   1. Press Ctrl+U (or Cmd+Option+U on Mac) to view page source');
+                    console.warn('   2. Press Ctrl+A to select all');
+                    console.warn('   3. Copy and paste here');
+                    console.warn('   OR paste the URL in Step 1 input field');
                 }
 
                 // Store conversion results
