@@ -64,6 +64,8 @@ MASTER_DOC_NAME = "South Jersey Real Estate Context Guide"
 last_webhook_payload = None
 # Store uploaded image data for the current conversion
 uploaded_images = []
+# Store link replacement stats from last conversion
+last_link_stats = None
 
 
 def migrate_kcm_links(html: str) -> str:
@@ -919,6 +921,8 @@ OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, no code fen
 @app.route('/convert', methods=['POST'])
 def convert():
     """Main endpoint for blog conversion"""
+    global last_link_stats
+
     try:
         data = request.json
         original_html = data.get('html', '')
@@ -955,6 +959,9 @@ def convert():
         logger.info("Checking for KCM internal links to replace...")
         url_mapping = get_url_mappings(notion_client)
         converted_html, link_stats = replace_kcm_links(converted_html, url_mapping)
+
+        # Store link stats globally for use in send-to-wordpress endpoint
+        last_link_stats = link_stats
 
         if link_stats['replaced'] > 0:
             logger.info(f"✅ Replaced {link_stats['replaced']} KCM links with WordPress URLs")
@@ -1008,7 +1015,7 @@ def convert():
 @app.route('/send-to-wordpress', methods=['POST'])
 def send_to_wordpress():
     """Send converted blog post to WordPress via n8n webhook"""
-    global last_webhook_payload, uploaded_images
+    global last_webhook_payload, uploaded_images, last_link_stats
 
     try:
         data = request.json
@@ -1080,10 +1087,13 @@ def send_to_wordpress():
         }
 
         logger.info(f"Yoast SEO metadata: Focus Keyphrase = '{yoast_meta['yoast_wpseo_focuskw']}'")
+        logger.info(f"Yoast SEO metadata: SEO Title = '{yoast_meta['yoast_wpseo_title']}'")
+        logger.info(f"Yoast SEO metadata: Meta Description = '{yoast_meta['yoast_wpseo_metadesc'][:80]}...'")
 
         # Log what we're about to send
         logger.info(f"Categories to send: {categories}")
         logger.info(f"Tags to send: {tags}")
+        logger.info(f"Featured Media ID: {featured_image_id}")
 
         # Build n8n webhook payload with properly structured parameters
         payload = build_webhook_payload(
@@ -1147,13 +1157,19 @@ def send_to_wordpress():
                 logger.info(f"Notion tracking data - KCM URL: {kcm_url}, WP Post ID: {wordpress_post_id}, WP URL: {wordpress_url}")
 
                 if kcm_url and wordpress_post_id and wordpress_url:
-                    # Extract slugs from URLs
-                    kcm_slug = urlparse(kcm_url).path.strip('/').split('/')[-1] if kcm_url else ''
-                    wordpress_slug = urlparse(wordpress_url).path.strip('/').split('/')[-1] if wordpress_url else ''
+                    # Extract slugs from URLs (full path for matching across different domains)
+                    # Example: /en/2025/09/18/do-you-know-how-much-your-house-is-really-worth/
+                    kcm_slug = urlparse(kcm_url).path.rstrip('/') if kcm_url else ''
+                    wordpress_slug = urlparse(wordpress_url).path.rstrip('/') if wordpress_url else ''
 
-                    # Count internal links
-                    all_kcm_links = extract_kcm_links(converted_html)
-                    internal_links_count = len(all_kcm_links)
+                    # Use stored link stats from conversion (links have already been replaced)
+                    # Total internal links = replaced + not_found
+                    internal_links_count = 0
+                    if last_link_stats:
+                        internal_links_count = last_link_stats.get('replaced', 0) + len(last_link_stats.get('not_found', []))
+                        logger.info(f"Internal links count: {internal_links_count} ({last_link_stats.get('replaced', 0)} replaced, {len(last_link_stats.get('not_found', []))} not found)")
+                    else:
+                        logger.warning("No link stats available - internal links count will be 0")
 
                     # Ensure categories and tags are lists of strings (not IDs)
                     # They should already be lists of category/tag names from seo_metadata
