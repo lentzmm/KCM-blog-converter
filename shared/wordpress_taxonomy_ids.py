@@ -163,11 +163,14 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
     if featured_media_id:
         payload['featured_media'] = featured_media_id
 
-    # n8n expects Yoast fields at the root level with specific field names
-    # n8n accesses: body.body.yoast_focus_keyword and body.body.yoast_meta_description
+    # CRITICAL: N8N workflow uses HTTP Request node (NOT WordPress node)
+    # WordPress REST API requires Yoast fields in the 'meta' object with underscore-prefixed keys
+    # Format: meta: { _yoast_wpseo_focuskw: '...', _yoast_wpseo_metadesc: '...', _yoast_wpseo_title: '...' }
     if yoast_meta:
-        payload['yoast_focus_keyword'] = yoast_meta.get('yoast_wpseo_focuskw', '')
-        payload['yoast_meta_description'] = yoast_meta.get('yoast_wpseo_metadesc', '')
-        payload['yoast_title'] = yoast_meta.get('yoast_wpseo_title', '')
+        payload['meta'] = {
+            '_yoast_wpseo_focuskw': yoast_meta.get('yoast_wpseo_focuskw', ''),
+            '_yoast_wpseo_metadesc': yoast_meta.get('yoast_wpseo_metadesc', ''),
+            '_yoast_wpseo_title': yoast_meta.get('yoast_wpseo_title', '')
+        }
 
     return payload
