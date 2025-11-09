@@ -1114,9 +1114,18 @@ def send_to_wordpress():
         # Log the actual payload structure (without the huge content field)
         payload_debug = {k: v for k, v in payload.items() if k != 'content'}
         payload_debug['content'] = f"<{len(payload.get('content', ''))} chars>"
-        logger.info(f"Webhook payload (inner): {payload_debug}")
+        logger.info(f"Webhook payload (inner): {json.dumps(payload_debug, indent=2)}")
         logger.info(f"Categories (IDs): {payload.get('categories', [])}")
         logger.info(f"Tags (IDs): {payload.get('tags', [])}")
+
+        # CRITICAL: Log what we're actually sending to N8N
+        logger.info(f"🔍 PAYLOAD INSPECTION:")
+        logger.info(f"  - featured_media in payload: {('featured_media' in payload)}")
+        logger.info(f"  - featured_media value: {payload.get('featured_media', 'NOT SET')}")
+        logger.info(f"  - meta in payload: {('meta' in payload)}")
+        if 'meta' in payload:
+            logger.info(f"  - meta fields: {list(payload['meta'].keys())}")
+            logger.info(f"  - meta values: {payload['meta']}")
 
         # Store payload for potential retry
         last_webhook_payload = wrapped_payload
@@ -1139,12 +1148,30 @@ def send_to_wordpress():
             # Get webhook response (needed regardless of Notion tracking)
             # n8n may return an array or object - handle both
             webhook_response_raw = response.json() if response.text else {}
+
+            # Log the RAW response from N8N/WordPress for debugging
+            logger.info(f"N8N/WordPress RAW response type: {type(webhook_response_raw).__name__}")
+            logger.info(f"N8N/WordPress RAW response: {json.dumps(webhook_response_raw, indent=2)[:500]}...")
+
             if isinstance(webhook_response_raw, list) and len(webhook_response_raw) > 0:
                 webhook_response = webhook_response_raw[0]  # Extract first item from array
             elif isinstance(webhook_response_raw, dict):
                 webhook_response = webhook_response_raw
             else:
                 webhook_response = {}
+
+            # Log what WordPress actually returned for critical fields
+            logger.info(f"WordPress Response - Post ID: {webhook_response.get('id', 'NOT SET')}")
+            logger.info(f"WordPress Response - Post URL: {webhook_response.get('link', 'NOT SET')}")
+            logger.info(f"WordPress Response - Featured Media: {webhook_response.get('featured_media', 'NOT SET')}")
+            if 'meta' in webhook_response:
+                logger.info(f"WordPress Response - Meta fields: {list(webhook_response['meta'].keys())[:10]}")
+                # Check if Yoast fields are present
+                yoast_fields_present = [k for k in webhook_response.get('meta', {}).keys() if 'yoast' in k.lower()]
+                if yoast_fields_present:
+                    logger.info(f"WordPress Response - Yoast fields found: {yoast_fields_present}")
+                else:
+                    logger.warning("⚠️  WordPress Response - NO Yoast fields in meta object!")
 
             # Try to add conversion record to Notion (optional feature)
             try:
@@ -1157,10 +1184,17 @@ def send_to_wordpress():
                 logger.info(f"Notion tracking data - KCM URL: {kcm_url}, WP Post ID: {wordpress_post_id}, WP URL: {wordpress_url}")
 
                 if kcm_url and wordpress_post_id and wordpress_url:
-                    # Extract slugs from URLs (full path for matching across different domains)
-                    # Example: /en/2025/09/18/do-you-know-how-much-your-house-is-really-worth/
-                    kcm_slug = urlparse(kcm_url).path.rstrip('/') if kcm_url else ''
-                    wordpress_slug = urlparse(wordpress_url).path.rstrip('/') if wordpress_url else ''
+                    # Extract slugs from URLs
+                    # KCM slug: just the article slug (last segment of path)
+                    # Example: https://simplifyingthemarket.com/en/2025/09/24/how-to-buy-a-home/ → "how-to-buy-a-home"
+                    kcm_path = urlparse(kcm_url).path.rstrip('/') if kcm_url else ''
+                    kcm_slug = kcm_path.split('/')[-1] if kcm_path else ''
+
+                    # WordPress slug: same extraction method
+                    wordpress_path = urlparse(wordpress_url).path.rstrip('/') if wordpress_url else ''
+                    wordpress_slug = wordpress_path.split('/')[-1] if wordpress_path else ''
+
+                    logger.info(f"Notion tracking - KCM slug: '{kcm_slug}', WP slug: '{wordpress_slug}'")
 
                     # Use stored link stats from conversion (links have already been replaced)
                     # Total internal links = replaced + not_found
