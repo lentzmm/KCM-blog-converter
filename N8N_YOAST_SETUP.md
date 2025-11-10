@@ -36,8 +36,13 @@ Your n8n "Post" node should have these body parameters to send Yoast SEO fields 
    ```json
    {
      "body": {
-       "title": "...",
-       "content": "...",
+       "title": "Why Home Prices Are Rising in 2025",
+       "slug": "why-home-prices-are-rising-in-2025",
+       "content": "<p>Full article content...</p>",
+       "excerpt": "Short excerpt...",
+       "categories": [123, 456],
+       "tags": [789, 101],
+       "featured_media": 12345,
        "yoast_focus_keyword": "real estate tips",
        "yoast_meta_description": "Learn about...",
        "yoast_seo_title": "SEO Title Here"
@@ -69,28 +74,59 @@ Your n8n "Post" node should have these body parameters to send Yoast SEO fields 
 
 ## Field Name Mapping
 
+### Core WordPress Fields
+| Python Field Name | n8n Expression | WordPress Field |
+|------------------|----------------|----------------|
+| `title` | `body.body.title` | `title` |
+| `slug` | `body.body.slug` | `slug` |
+| `content` | `body.body.content` | `content` |
+| `excerpt` | `body.body.excerpt` | `excerpt` |
+| `categories` | `body.body.categories` | `categories` (array of IDs) |
+| `tags` | `body.body.tags` | `tags` (array of IDs) |
+| `featured_media` | `body.body.featured_media` | `featured_media` (media ID) |
+
+### Yoast SEO Fields
 | Python Field Name | n8n Expression | WordPress Meta Key |
 |------------------|----------------|-------------------|
 | `yoast_focus_keyword` | `body.body.yoast_focus_keyword` | `_yoast_wpseo_focuskw` |
 | `yoast_meta_description` | `body.body.yoast_meta_description` | `_yoast_wpseo_metadesc` |
 | `yoast_seo_title` | `body.body.yoast_seo_title` | `_yoast_wpseo_title` |
 
+### Slug Auto-Generation
+If no slug is provided, Python automatically generates a URL-friendly slug from the title:
+- "Why Home Prices Are Rising!" → "why-home-prices-are-rising"
+- "First-Time Home Buyer's Guide" → "first-time-home-buyer-s-guide"
+
 ## Troubleshooting
 
-### Yoast fields not being set?
+### n8n shows "undefined" for fields?
 
-1. **Check Python logs** - Verify the payload contains the Yoast fields:
+**Common undefined fields:**
+- `{{$('Webhook').item.json.body.body.slug}}`
+- `{{$('Webhook').item.json.body.body.yoast_focus_keyword}}`
+- `{{$('Webhook').item.json.body.body.yoast_meta_description}}`
+
+**Solution:** Check that Python script is sending the correct field names (see Field Name Mapping above).
+
+1. **Check Python logs** - Verify the payload contains all fields:
    ```
+   Title: Why Home Prices Are Rising
+   Slug: why-home-prices-are-rising
    🔍 YOAST FIELDS (v2.1 - N8N FORMAT):
      - yoast_focus_keyword: real estate tips
      - yoast_meta_description: Learn about...
+     - yoast_seo_title: SEO optimized title
    ```
 
-2. **Check n8n expressions** - Make sure n8n "Post" node has the body parameters configured correctly
+2. **Check n8n webhook data** - In n8n, click on the Webhook node and check "Test URL" to see what data is being received
 
-3. **Check WordPress plugin** - Ensure `wordpress-yoast-rest-api.php` v2.1 is active in WordPress
+### Yoast fields not being set in WordPress?
 
-4. **Check WordPress logs** - Look for these messages in error logs:
+1. **Check n8n expressions** - Make sure n8n "Post" node has the body parameters configured correctly
+
+2. **Check WordPress plugin** - Ensure `wordpress-yoast-rest-api.php` v2.1 is active in WordPress
+
+3. **Check WordPress logs** - Look for these messages in error logs:
    ```
    Yoast REST API (meta interceptor): Updated _yoast_wpseo_focuskw for post 12345
    ```
