@@ -163,25 +163,23 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
     if featured_media_id:
         payload['featured_media'] = featured_media_id
 
-    # CRITICAL FIX v2.0: Send Yoast fields as TOP-LEVEL fields, not under 'meta'
-    # WordPress treats underscore-prefixed meta fields as "private" and blocks REST API updates.
-    # We now use register_rest_field() in the WordPress plugin, which registers these as
-    # top-level REST API fields with direct update_callback control.
-    # Format: { _yoast_wpseo_focuskw: '...', _yoast_wpseo_metadesc: '...', _yoast_wpseo_title: '...' }
+    # CRITICAL FIX v2.1: Send Yoast fields in n8n-compatible format
+    # n8n expects field names: yoast_meta_description, yoast_focus_keyword, yoast_seo_title
+    # n8n then sends them to WordPress as: meta[_yoast_wpseo_metadesc], meta[_yoast_wpseo_focuskw]
     if yoast_meta:
-        # Focus keyphrase - send as TOP-LEVEL field
+        # Focus keyphrase - send with n8n-compatible name
         focuskw = yoast_meta.get('yoast_wpseo_focuskw', '').strip()
         if focuskw:
-            payload['_yoast_wpseo_focuskw'] = focuskw
+            payload['yoast_focus_keyword'] = focuskw
 
-        # Meta description - send as TOP-LEVEL field (don't send if it's a template string)
+        # Meta description - send with n8n-compatible name (don't send if it's a template string)
         metadesc = yoast_meta.get('yoast_wpseo_metadesc', '').strip()
         if metadesc and not metadesc.startswith('%%'):
-            payload['_yoast_wpseo_metadesc'] = metadesc
+            payload['yoast_meta_description'] = metadesc
 
-        # SEO title - send as TOP-LEVEL field
+        # SEO title - send with n8n-compatible name
         seo_title = yoast_meta.get('yoast_wpseo_title', '').strip()
         if seo_title:
-            payload['_yoast_wpseo_title'] = seo_title
+            payload['yoast_seo_title'] = seo_title
 
     return payload

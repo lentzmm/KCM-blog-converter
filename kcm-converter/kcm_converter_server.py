@@ -1118,11 +1118,11 @@ def send_to_wordpress():
         logger.info(f"Categories (IDs): {payload.get('categories', [])}")
         logger.info(f"Tags (IDs): {payload.get('tags', [])}")
 
-        # CRITICAL v2.0: Yoast fields are now sent as TOP-LEVEL fields, not under 'meta'
-        logger.info(f"🔍 YOAST FIELDS (v2.0 - TOP-LEVEL):")
-        logger.info(f"  - _yoast_wpseo_focuskw: {payload.get('_yoast_wpseo_focuskw', 'NOT SET')}")
-        logger.info(f"  - _yoast_wpseo_title: {payload.get('_yoast_wpseo_title', 'NOT SET')}")
-        logger.info(f"  - _yoast_wpseo_metadesc: {payload.get('_yoast_wpseo_metadesc', 'NOT SET')[:80]}...")
+        # CRITICAL v2.1: Yoast fields sent in n8n-compatible format
+        logger.info(f"🔍 YOAST FIELDS (v2.1 - N8N FORMAT):")
+        logger.info(f"  - yoast_focus_keyword: {payload.get('yoast_focus_keyword', 'NOT SET')}")
+        logger.info(f"  - yoast_seo_title: {payload.get('yoast_seo_title', 'NOT SET')}")
+        logger.info(f"  - yoast_meta_description: {payload.get('yoast_meta_description', 'NOT SET')[:80]}...")
 
         # CRITICAL: Log what we're actually sending to N8N
         logger.info(f"🔍 PAYLOAD INSPECTION:")
