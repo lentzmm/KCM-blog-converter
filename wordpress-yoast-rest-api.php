@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Yoast SEO REST API Support
- * Description: Enables Yoast SEO fields (focus keyphrase, meta description, SEO title) to be updated via WordPress REST API. Uses register_rest_field() to bypass WordPress private meta restrictions. Also fixes featured_media permission bug.
- * Version: 2.0
+ * Description: Enables Yoast SEO fields (focus keyphrase, meta description, SEO title) to be updated via WordPress REST API. Supports both standard REST API format and n8n HTTP Request node format. Also fixes featured_media permission bug.
+ * Version: 2.1
  * Author: Auto-generated for KCM Blog Converter
  *
  * INSTALLATION:
@@ -128,6 +128,63 @@ function fix_featured_media_rest_api_permissions($allcaps, $caps, $args, $user) 
 }
 
 /**
+ * CRITICAL FIX FOR N8N: Intercept meta parameter and update Yoast fields
+ *
+ * n8n HTTP Request node sends data as:
+ * {
+ *   "meta[_yoast_wpseo_metadesc]": "value",
+ *   "meta[_yoast_wpseo_focuskw]": "value"
+ * }
+ *
+ * Which WordPress parses into:
+ * {
+ *   "meta": {
+ *     "_yoast_wpseo_metadesc": "value",
+ *     "_yoast_wpseo_focuskw": "value"
+ *   }
+ * }
+ *
+ * This filter extracts Yoast fields from the meta parameter and updates them.
+ */
+add_action('rest_insert_post', 'handle_yoast_meta_from_request', 10, 3);
+
+function handle_yoast_meta_from_request($post, $request, $creating) {
+    // Get the meta parameter from the request
+    $meta = $request->get_param('meta');
+
+    if (!is_array($meta)) {
+        return;
+    }
+
+    // List of Yoast fields to check for
+    $yoast_fields = array(
+        '_yoast_wpseo_focuskw',
+        '_yoast_wpseo_title',
+        '_yoast_wpseo_metadesc'
+    );
+
+    // Update each Yoast field if present in the meta parameter
+    foreach ($yoast_fields as $field) {
+        if (isset($meta[$field]) && !empty($meta[$field])) {
+            $value = $meta[$field];
+
+            // Sanitize based on field type
+            if ($field === '_yoast_wpseo_metadesc') {
+                $value = sanitize_textarea_field($value);
+            } else {
+                $value = sanitize_text_field($value);
+            }
+
+            // Update the post meta
+            update_post_meta($post->ID, $field, $value);
+
+            // Log for debugging
+            error_log("Yoast REST API (meta interceptor): Updated {$field} for post {$post->ID}");
+        }
+    }
+}
+
+/**
  * TESTING THE PLUGIN
  *
  * After activating this plugin, test with this REST API call:
@@ -137,7 +194,7 @@ function fix_featured_media_rest_api_permissions($allcaps, $caps, $args, $user) 
  *   Content-Type: application/json
  *   Authorization: Basic <your-base64-encoded-credentials>
  *
- * Body:
+ * Body (Standard format):
  * {
  *   "title": "Test Post",
  *   "content": "<p>Test content</p>",
@@ -150,15 +207,10 @@ function fix_featured_media_rest_api_permissions($allcaps, $caps, $args, $user) 
  *   }
  * }
  *
- * Then check the response - it should include the meta fields AND featured_media:
- * {
- *   "id": 123,
- *   "title": "Test Post",
- *   "featured_media": 12345,
- *   "meta": {
- *     "_yoast_wpseo_focuskw": "test keyphrase",
- *     "_yoast_wpseo_title": "Test SEO Title",
- *     "_yoast_wpseo_metadesc": "Test meta description"
- *   }
- * }
+ * OR n8n HTTP Request format (body parameters):
+ * - meta[_yoast_wpseo_focuskw]: "test keyphrase"
+ * - meta[_yoast_wpseo_title]: "Test SEO Title"
+ * - meta[_yoast_wpseo_metadesc]: "Test meta description"
+ *
+ * Both formats are now supported!
  */
