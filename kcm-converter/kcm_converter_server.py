@@ -1556,6 +1556,72 @@ def upload_all():
             logger.info(f"   Featured Image: {webhook_response.get('featured_media', 'NOT SET')}")
             logger.info("=" * 70)
 
+            # Try to add conversion record to Notion (optional feature)
+            try:
+                kcm_url = data.get('kcm_url', '')  # Original KCM URL from frontend
+
+                # WordPress REST API returns 'id' and 'link', not 'post_id' and 'post_url'
+                wordpress_post_id = webhook_response.get('id', 0)
+                wordpress_url = webhook_response.get('link', '')
+
+                logger.info(f"Notion tracking data - KCM URL: {kcm_url}, WP Post ID: {wordpress_post_id}, WP URL: {wordpress_url}")
+
+                if kcm_url and wordpress_post_id and wordpress_url:
+                    # Extract slugs from URLs
+                    # KCM slug: just the article slug (last segment of path)
+                    # Example: https://simplifyingthemarket.com/en/2025/09/24/how-to-buy-a-home/ → "how-to-buy-a-home"
+                    kcm_path = urlparse(kcm_url).path.rstrip('/') if kcm_url else ''
+                    kcm_slug = kcm_path.split('/')[-1] if kcm_path else ''
+
+                    # WordPress slug: same extraction method
+                    wordpress_path = urlparse(wordpress_url).path.rstrip('/') if wordpress_url else ''
+                    wordpress_slug = wordpress_path.split('/')[-1] if wordpress_path else ''
+
+                    logger.info(f"Notion tracking - KCM slug: '{kcm_slug}', WP slug: '{wordpress_slug}'")
+
+                    # Use stored link stats from conversion (links have already been replaced)
+                    # Total internal links = replaced + not_found
+                    internal_links_count = 0
+                    if last_link_stats:
+                        internal_links_count = last_link_stats.get('replaced', 0) + len(last_link_stats.get('not_found', []))
+                        logger.info(f"Internal links count: {internal_links_count} ({last_link_stats.get('replaced', 0)} replaced, {len(last_link_stats.get('not_found', []))} not found)")
+                    else:
+                        logger.warning("No link stats available - internal links count will be 0")
+
+                    # Ensure categories and tags are lists of strings (not IDs)
+                    # They should already be lists of category/tag names from seo_metadata
+                    category_list = categories if isinstance(categories, list) else []
+                    tag_list = tags if isinstance(tags, list) else []
+
+                    logger.info(f"Notion tracking - Categories: {category_list}, Tags: {tag_list}")
+
+                    # Add to Notion conversion tracking database
+                    notion_page_id = add_conversion_record(
+                        notion_client=notion_client,
+                        kcm_url=kcm_url,
+                        kcm_slug=kcm_slug,
+                        wordpress_url=wordpress_url,
+                        wordpress_slug=wordpress_slug,
+                        wordpress_post_id=wordpress_post_id,
+                        article_title=title,
+                        focus_keyphrase=seo_metadata.get('focus_keyphrase', ''),
+                        categories=category_list,
+                        tags=tag_list,
+                        seo_title=seo_metadata.get('seo_title', ''),
+                        meta_description=seo_metadata.get('meta_description', ''),
+                        internal_links_count=internal_links_count,
+                        status='Published'
+                    )
+
+                    if notion_page_id:
+                        logger.info(f"✅ Conversion tracked in Notion (Page ID: {notion_page_id})")
+                else:
+                    logger.warning("⚠️  Missing KCM URL or WordPress details - skipping Notion tracking")
+
+            except Exception as notion_error:
+                # Don't fail the whole request if Notion tracking fails
+                logger.error(f"Failed to add conversion record to Notion (non-critical): {notion_error}")
+
             return jsonify({
                 'success': True,
                 'wordpress_response': webhook_response,
