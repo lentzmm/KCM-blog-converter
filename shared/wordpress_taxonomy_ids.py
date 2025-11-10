@@ -135,7 +135,7 @@ def get_tag_name_by_id(tag_id):
             return name
     return None
 
-def build_webhook_payload(title, content, excerpt, categories, tags, featured_media_id=None, yoast_meta=None):
+def build_webhook_payload(title, content, excerpt, categories, tags, featured_media_id=None, yoast_meta=None, slug=None):
     """
     Build n8n webhook payload for WordPress post creation
 
@@ -147,14 +147,22 @@ def build_webhook_payload(title, content, excerpt, categories, tags, featured_me
         tags: List of tag names
         featured_media_id: WordPress media ID for featured image
         yoast_meta: Dict with Yoast SEO metadata (yoast_wpseo_focuskw, yoast_wpseo_title, yoast_wpseo_metadesc)
+        slug: URL-friendly slug (auto-generated from title if not provided)
 
     Returns:
         Dict ready for n8n webhook POST
     """
+    # Auto-generate slug from title if not provided
+    if not slug:
+        import re
+        # Convert to lowercase, replace spaces/special chars with hyphens
+        slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
+
     payload = {
         'title': title,
         'content': content,
         'excerpt': excerpt,
+        'slug': slug,
         'status': 'draft',
         'categories': get_category_ids(categories),
         'tags': get_tag_ids(tags),

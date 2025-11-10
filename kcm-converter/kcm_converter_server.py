@@ -1115,6 +1115,8 @@ def send_to_wordpress():
         payload_debug = {k: v for k, v in payload.items() if k != 'content'}
         payload_debug['content'] = f"<{len(payload.get('content', ''))} chars>"
         logger.info(f"Webhook payload (inner): {json.dumps(payload_debug, indent=2)}")
+        logger.info(f"Title: {payload.get('title', 'NOT SET')}")
+        logger.info(f"Slug: {payload.get('slug', 'NOT SET')}")
         logger.info(f"Categories (IDs): {payload.get('categories', [])}")
         logger.info(f"Tags (IDs): {payload.get('tags', [])}")
 
