@@ -1396,6 +1396,196 @@ def retry_webhook():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/upload-all', methods=['POST'])
+def upload_all():
+    """ONE-CLICK: Upload images AND send blog post to WordPress in a single operation"""
+    global uploaded_images, last_webhook_payload, last_link_stats
+
+    try:
+        data = request.json
+        images = data.get('images', [])
+        converted_html = data.get('converted_html', '')
+        seo_metadata = data.get('seo_metadata', {})
+
+        if not converted_html:
+            return jsonify({'error': 'No HTML provided'}), 400
+
+        if not seo_metadata:
+            return jsonify({'error': 'No SEO metadata provided'}), 400
+
+        logger.info("=" * 70)
+        logger.info("ONE-CLICK UPLOAD: Starting combined image + WordPress upload")
+        logger.info("=" * 70)
+
+        # STEP 1: Upload images to WordPress (if any)
+        featured_image_id = None
+        if images:
+            logger.info(f"STEP 1/2: Processing {len(images)} images...")
+
+            if not WORDPRESS_APP_PASSWORD or WORDPRESS_APP_PASSWORD == 'your_wordpress_app_password_here':
+                return jsonify({
+                    'error': 'WordPress credentials not configured. Please set WORDPRESS_APP_PASSWORD in .env file.'
+                }), 400
+
+            processed_images = []
+            failed_images = []
+
+            for img in images:
+                original_url = img.get('original_url')
+                suggested_filename = img.get('suggested_filename')
+                alt_text = img.get('alt_text', '')
+
+                logger.info(f"  Processing image: {original_url}")
+
+                # Download image
+                image_data = download_image(original_url)
+                if not image_data:
+                    failed_images.append({
+                        'original_url': original_url,
+                        'error': 'Failed to download'
+                    })
+                    continue
+
+                # Upload to WordPress
+                wp_result = upload_image_to_wordpress(image_data, suggested_filename, alt_text)
+                if not wp_result:
+                    failed_images.append({
+                        'original_url': original_url,
+                        'error': 'Failed to upload to WordPress'
+                    })
+                    continue
+
+                processed_images.append({
+                    'original_url': original_url,
+                    'wordpress_id': wp_result['id'],
+                    'wordpress_url': wp_result['url'],
+                    'filename': wp_result['filename'],
+                    'alt_text': wp_result['alt_text']
+                })
+
+            # Store for webhook use
+            uploaded_images = processed_images
+
+            if processed_images:
+                featured_image_id = processed_images[0]['wordpress_id']
+                logger.info(f"✅ Uploaded {len(processed_images)} images, using first as featured image: ID {featured_image_id}")
+
+                # Update image URLs in HTML
+                image_url_mapping = {img['original_url']: img['wordpress_url'] for img in processed_images}
+                logger.info(f"  Updating {len(image_url_mapping)} image URLs in HTML")
+                converted_html = convert_image_urls(converted_html, image_url_mapping)
+
+                # Remove first image from post content (it's the featured image)
+                first_img_pattern = r'<img\s+[^>]*?src=["\'][^"\']+["\'][^>]*?>'
+                match = re.search(first_img_pattern, converted_html, re.IGNORECASE)
+                if match:
+                    img_with_breaks = re.sub(
+                        r'<br\s*/?>\s*' + re.escape(match.group(0)) + r'\s*<br\s*/?>',
+                        '',
+                        converted_html,
+                        flags=re.IGNORECASE
+                    )
+                    if img_with_breaks != converted_html:
+                        converted_html = img_with_breaks
+                        logger.info("  Removed first image (featured) and surrounding <br> tags from content")
+                    else:
+                        converted_html = converted_html.replace(match.group(0), '', 1)
+                        logger.info("  Removed first image (featured) from content")
+
+            if failed_images:
+                logger.warning(f"⚠️  {len(failed_images)} images failed to upload")
+        else:
+            logger.info("STEP 1/2: No images to process, skipping image upload")
+
+        # STEP 2: Send to WordPress via n8n
+        logger.info("STEP 2/2: Sending post to WordPress...")
+
+        # Get title from SEO metadata
+        title = seo_metadata.get('seo_title', seo_metadata.get('title', 'Untitled'))
+
+        # Get categories and tags
+        categories = seo_metadata.get('categories', [])
+        tags = seo_metadata.get('tags', [])
+
+        # Build Yoast SEO meta
+        yoast_meta = {
+            'yoast_wpseo_focuskw': seo_metadata.get('focus_keyphrase', ''),
+            'yoast_wpseo_title': seo_metadata.get('seo_title', ''),
+            'yoast_wpseo_metadesc': seo_metadata.get('meta_description', '')
+        }
+
+        # Build n8n webhook payload
+        from shared.wordpress_taxonomy_ids import build_webhook_payload
+
+        payload = build_webhook_payload(
+            title=title,
+            content=converted_html,
+            excerpt='',
+            categories=categories,
+            tags=tags,
+            featured_media_id=featured_image_id,
+            yoast_meta=yoast_meta
+        )
+
+        # Wrap payload for n8n
+        wrapped_payload = {'body': payload}
+        last_webhook_payload = wrapped_payload
+
+        # Send to n8n webhook
+        webhook_url = "https://n8n.srv1007195.hstgr.cloud/webhook/wordpress-publish"
+
+        response = requests.post(
+            webhook_url,
+            json=wrapped_payload,
+            headers={'Content-Type': 'application/json'},
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            webhook_response_raw = response.json() if response.text else {}
+
+            if isinstance(webhook_response_raw, list) and len(webhook_response_raw) > 0:
+                webhook_response = webhook_response_raw[0]
+            elif isinstance(webhook_response_raw, dict):
+                webhook_response = webhook_response_raw
+            else:
+                webhook_response = {}
+
+            logger.info("=" * 70)
+            logger.info("✅ ONE-CLICK UPLOAD COMPLETE!")
+            logger.info(f"   WordPress Post ID: {webhook_response.get('id', 'NOT SET')}")
+            logger.info(f"   Post URL: {webhook_response.get('link', 'NOT SET')}")
+            logger.info(f"   Featured Image: {webhook_response.get('featured_media', 'NOT SET')}")
+            logger.info("=" * 70)
+
+            return jsonify({
+                'success': True,
+                'wordpress_response': webhook_response,
+                'images_processed': len(uploaded_images) if uploaded_images else 0,
+                'post_id': webhook_response.get('id'),
+                'post_url': webhook_response.get('link'),
+                'featured_image_id': webhook_response.get('featured_media')
+            })
+        else:
+            logger.error(f"WordPress webhook returned status {response.status_code}")
+            return jsonify({
+                'error': f'WordPress webhook returned status {response.status_code}',
+                'details': response.text
+            }), response.status_code
+
+    except requests.exceptions.Timeout:
+        logger.error("One-click upload timeout")
+        return jsonify({'error': 'WordPress request timed out'}), 504
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"One-click upload request error: {e}")
+        return jsonify({'error': f'Failed to connect to WordPress: {str(e)}'}), 500
+
+    except Exception as e:
+        logger.error(f"Error in one-click upload: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
