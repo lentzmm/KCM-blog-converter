@@ -139,7 +139,13 @@ Based on the original article and guides:
    - Maximum 4-5 town mentions total
    - Vary towns from article to article to avoid word stuffing
 
-4. **Identify Key Data** (from Context Docs)
+4. **Limit Regional References** (Anti-Stuffing)
+   - "South Jersey" should appear 3-5 times MAX in entire article
+   - Use variations: "the region", "this area", "locally", "in our market"
+   - First mention can be "South Jersey", subsequent mentions use variations
+   - Avoid repetitive phrasing like "South Jersey homes", "South Jersey market", etc.
+
+5. **Identify Key Data** (from Context Docs)
    - What statistics support this article?
    - What local examples are relevant?
    - All data must be verifiable
@@ -233,6 +239,8 @@ Before delivering, verify against each guide:
 ---
 
 ## 📋 REQUIRED DELIVERABLES
+
+**CRITICAL OUTPUT RULE**: Start IMMEDIATELY with "### 1. REWRITTEN HTML" - NO preamble, NO explanatory text, NO "I'll convert..." text before the sections.
 
 Return five clearly separated sections:
 

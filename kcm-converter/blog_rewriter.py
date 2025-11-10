@@ -409,6 +409,12 @@ OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, just the co
 
             rewritten_html = message.content[0].text.strip()
 
+            # CRITICAL: Remove any preamble text before "### 1. REWRITTEN HTML"
+            # Claude sometimes adds explanatory text like "I'll convert this KCM article..."
+            if '### 1. REWRITTEN HTML' in rewritten_html:
+                rewritten_html = '### 1. REWRITTEN HTML' + rewritten_html.split('### 1. REWRITTEN HTML', 1)[1]
+                logger.info("[OK] Stripped preamble text before sections")
+
             # Remove markdown code fences if present
             if rewritten_html.startswith('```html'):
                 lines = rewritten_html.split('\n')
