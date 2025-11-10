@@ -1514,9 +1514,7 @@ def upload_all():
             'yoast_wpseo_metadesc': seo_metadata.get('meta_description', '')
         }
 
-        # Build n8n webhook payload
-        from shared.wordpress_taxonomy_ids import build_webhook_payload
-
+        # Build n8n webhook payload (imported at top of file)
         payload = build_webhook_payload(
             title=title,
             content=converted_html,
