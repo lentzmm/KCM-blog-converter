@@ -1,10 +1,62 @@
-# n8n Workflow Configuration for Yoast SEO Fields
+# n8n Workflow Configuration for WordPress Posts
 
 ## Current n8n HTTP Request Node Configuration (v2.1)
 
-Your n8n "Post" node should have these body parameters to send Yoast SEO fields to WordPress:
+Your n8n "Post" node should have these body parameters:
 
-### Required Parameters (Already Configured)
+### Core WordPress Parameters (Required)
+
+```javascript
+// Title
+{
+  "name": "title",
+  "value": "={{ $('Webhook').item.json.body.body.title }}"
+}
+
+// Slug
+{
+  "name": "slug",
+  "value": "={{ $('Webhook').item.json.body.body.slug }}"
+}
+
+// Content
+{
+  "name": "content",
+  "value": "={{ $('Webhook').item.json.body.body.content }}"
+}
+
+// Excerpt
+{
+  "name": "excerpt",
+  "value": "={{ $('Webhook').item.json.body.body.excerpt }}"
+}
+
+// Status (hardcoded to draft)
+{
+  "name": "status",
+  "value": "draft"
+}
+
+// Categories (array of IDs)
+{
+  "name": "categories",
+  "value": "={{ $('Webhook').item.json.body.body.categories }}"
+}
+
+// Tags (array of IDs)
+{
+  "name": "tags",
+  "value": "={{ $('Webhook').item.json.body.body.tags }}"
+}
+
+// Featured Image (media ID)
+{
+  "name": "featured_media",
+  "value": "={{ $('Webhook').item.json.body.body.featured_media }}"
+}
+```
+
+### Yoast SEO Parameters (Required for SEO)
 
 ```javascript
 // Focus Keyword
@@ -18,12 +70,8 @@ Your n8n "Post" node should have these body parameters to send Yoast SEO fields 
   "name": "meta[_yoast_wpseo_metadesc]",
   "value": "={{ $('Webhook').item.json.body.body.yoast_meta_description }}"
 }
-```
 
-### Optional Parameter (Add if you want SEO Title support)
-
-```javascript
-// SEO Title
+// SEO Title (optional but recommended)
 {
   "name": "meta[_yoast_wpseo_title]",
   "value": "={{ $('Webhook').item.json.body.body.yoast_seo_title }}"
@@ -130,6 +178,38 @@ If no slug is provided, Python automatically generates a URL-friendly slug from 
    ```
    Yoast REST API (meta interceptor): Updated _yoast_wpseo_focuskw for post 12345
    ```
+
+### Featured image not being set?
+
+**Symptoms:** Post is created but `featured_media` returns 0 or is missing
+
+**Common Causes:**
+
+1. **Missing n8n parameter** - n8n is not forwarding the featured_media field to WordPress
+
+   **Solution:** Add this parameter to your n8n "Post" node:
+   ```javascript
+   {
+     "name": "featured_media",
+     "value": "={{ $('Webhook').item.json.body.body.featured_media }}"
+   }
+   ```
+
+2. **Image not uploaded** - Python didn't upload the image before creating the post
+
+   **Solution:** Check Python logs for:
+   ```
+   Featured Media ID: 12345
+   ```
+   If it shows `Featured Media ID: None`, the image upload failed.
+
+3. **WordPress permission issue** - WordPress can't read the attachment
+
+   **Solution:** The v2.1 plugin includes a fix for this. Ensure the plugin is active.
+
+4. **Invalid media ID** - The featured_media ID doesn't exist in WordPress
+
+   **Solution:** Check that the image was successfully uploaded and the ID is valid.
 
 ## WordPress Plugin Requirements
 
