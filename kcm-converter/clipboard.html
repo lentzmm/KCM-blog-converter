@@ -235,22 +235,40 @@ Paste KCM categories/tags here...
             </div>
 
             <div class="section" id="imagesSection" style="display:none;">
-                <div class="section-title">Step 4b: Images</div>
-                <div style="background:#d4edda; padding:15px; border-radius:4px; margin-bottom:15px; border:1px solid #28a745;">
-                    <strong>🚀 Automated Process (Recommended):</strong><br>
-                    Click the button below to automatically download images from KCM, rename them with SEO-optimized names, and upload them to WordPress. The first image will be set as the featured image.
+                <div class="section-title">Step 4b: Images & WordPress Upload</div>
+
+                <div style="background:#d4edda; padding:15px; border-radius:4px; margin-bottom:15px; border:2px solid #28a745;">
+                    <strong>🚀 ONE-CLICK UPLOAD (Recommended):</strong><br>
+                    Upload images AND create WordPress post in a single click! This automatically:<br>
+                    • Downloads and uploads all images to WordPress<br>
+                    • Sets first image as featured image<br>
+                    • Sends complete post to WordPress as draft<br>
+                    <button class="btn-primary" onclick="uploadAll()" id="uploadAllBtn" style="margin-top:10px; font-size:16px; padding:12px 24px;">
+                        🎯 Upload All to WordPress (One-Click)
+                    </button>
+                    <div id="uploadAllStatus" style="display:none; margin-top:10px; padding:10px; border-radius:4px;"></div>
                 </div>
-                <div style="margin-bottom:15px;">
-                    <button class="btn-primary" onclick="processImages()" id="processImagesBtn">🖼️ Upload Images to WordPress</button>
+
+                <div style="background:#e7f3ff; padding:15px; border-radius:4px; margin-bottom:15px; border:1px solid #0066cc;">
+                    <strong>📤 TWO-STEP PROCESS (Alternative):</strong><br>
+                    If you prefer more control, upload images and post separately:<br><br>
+                    <strong>Step 1:</strong> Upload images first<br>
+                    <button class="btn-secondary" onclick="processImages()" id="processImagesBtn" style="margin-top:5px;">
+                        🖼️ Upload Images to WordPress
+                    </button>
                     <div id="imageProcessStatus" style="display:none; margin-top:10px; padding:10px; border-radius:4px;"></div>
+                    <br><br>
+                    <strong>Step 2:</strong> Then send post (scroll down to Step 5)
                 </div>
+
                 <div style="background:#fff3cd; padding:15px; border-radius:4px; margin-bottom:15px; border:1px solid #ffc107;">
-                    <strong>📸 Manual Process (Alternative):</strong><br>
+                    <strong>📸 MANUAL PROCESS (If automation fails):</strong><br>
                     1. Click each "Download" link to save the image<br>
                     2. Rename the file to the suggested filename<br>
                     3. Upload to WordPress Media Library<br>
                     4. Verify the path matches the "WordPress Path" shown below
                 </div>
+
                 <div style="margin-bottom:10px;">
                     <button class="btn-secondary" onclick="downloadImageCSV()">📥 Download Image List (CSV)</button>
                 </div>
@@ -743,6 +761,102 @@ Paste KCM categories/tags here...
                     <small>Make sure the Python server is running (python kcm_converter_server.py)</small>
                 `;
                 retryBtn.disabled = false;
+            }
+        }
+
+        async function uploadAll() {
+            const statusEl = document.getElementById('uploadAllStatus');
+            const uploadAllBtn = document.getElementById('uploadAllBtn');
+
+            if (!currentConversion.html || !currentConversion.seo) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = '#f8d7da';
+                statusEl.style.color = '#721c24';
+                statusEl.style.border = '1px solid #f5c6cb';
+                statusEl.innerHTML = '❌ No conversion data available. Please convert a blog first.';
+                return;
+            }
+
+            if (!currentConversion.images || currentConversion.images.length === 0) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = '#f8d7da';
+                statusEl.style.color = '#721c24';
+                statusEl.style.border = '1px solid #f5c6cb';
+                statusEl.innerHTML = '❌ No images found. Run conversion first or use two-step process if post has no images.';
+                return;
+            }
+
+            // Show loading state
+            statusEl.style.display = 'block';
+            statusEl.style.background = '#fff3cd';
+            statusEl.style.color = '#856404';
+            statusEl.style.border = '1px solid #ffeaa7';
+            statusEl.innerHTML = `
+                <div class="spinner"></div>
+                <strong>ONE-CLICK UPLOAD IN PROGRESS...</strong><br>
+                <small>Step 1/2: Uploading ${currentConversion.images.length} images to WordPress...</small>
+            `;
+            uploadAllBtn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:5000/upload-all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        converted_html: currentConversion.html,
+                        seo_metadata: currentConversion.seo,
+                        images: currentConversion.images,
+                        kcm_url: currentConversion.kcm_url
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Success
+                    statusEl.style.background = '#d4edda';
+                    statusEl.style.color = '#155724';
+                    statusEl.style.border = '1px solid #c3e6cb';
+                    statusEl.innerHTML = `
+                        <strong>✅ ONE-CLICK UPLOAD COMPLETE!</strong><br><br>
+                        <strong>Images Uploaded:</strong> ${result.images_processed} images<br>
+                        <strong>Featured Image ID:</strong> ${result.featured_image_id}<br>
+                        <strong>WordPress Post ID:</strong> ${result.post_id}<br>
+                        <strong>Post URL:</strong> <a href="${result.post_url}" target="_blank" style="color:#155724;">${result.post_url}</a><br>
+                        <br>
+                        <small>Post saved as draft. <a href="https://mikesellsnj.com/wp-admin/post.php?post=${result.post_id}&action=edit" target="_blank" style="color:#155724;">Edit in WordPress</a> | <a href="https://mikesellsnj.com/wp-admin/edit.php?post_status=draft&post_type=post" target="_blank" style="color:#155724;">View All Drafts</a></small>
+                    `;
+
+                    // Store featured image ID for future use
+                    currentConversion.featured_image_id = result.featured_image_id;
+
+                    uploadAllBtn.disabled = false;
+                } else {
+                    // Error
+                    statusEl.style.background = '#f8d7da';
+                    statusEl.style.color = '#721c24';
+                    statusEl.style.border = '1px solid #f5c6cb';
+                    statusEl.innerHTML = `
+                        <strong>❌ Upload Failed</strong><br>
+                        ${result.error || 'Unknown error occurred'}<br>
+                        ${result.details ? `<small>${result.details}</small>` : ''}<br>
+                        <br>
+                        <small>Try the two-step process instead: Upload images first, then send to WordPress separately.</small>
+                    `;
+                    uploadAllBtn.disabled = false;
+                }
+            } catch (error) {
+                statusEl.style.background = '#f8d7da';
+                statusEl.style.color = '#721c24';
+                statusEl.style.border = '1px solid #f5c6cb';
+                statusEl.innerHTML = `
+                    <strong>❌ Connection Error</strong><br>
+                    ${error.message}<br>
+                    <small>Make sure the Python server is running (python kcm_converter_server.py)</small>
+                `;
+                uploadAllBtn.disabled = false;
             }
         }
     </script>
