@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'shared'))
 from wordpress_taxonomy import get_categories_prompt, get_tags_prompt
 from kcm_to_wordpress_mapping import parse_kcm_recommendations, merge_taxonomy
 from wordpress_taxonomy_ids import build_webhook_payload
-from notion_conversion_tracker import get_url_mappings, add_conversion_record
+from notion_conversion_tracker import get_url_mappings, get_slug_mappings, add_conversion_record
 from link_replacer import replace_kcm_links, extract_kcm_links
 import requests
 
@@ -68,25 +68,51 @@ uploaded_images = []
 last_link_stats = None
 
 
-def migrate_kcm_links(html: str) -> str:
+def migrate_kcm_links(html: str, slug_mapping: Dict[str, str] = None) -> str:
     """
-    Migrate KCM links to MSNJ format
+    Migrate KCM links to MSNJ format using Notion database lookups
     From: https://www.simplifyingthemarket.com/en/2025/09/24/[slug]/?a=211199-eed154519afbfe4c41f1265fedb5efcd
-    To: https://mikesellsnj.com/[slug]/
+    To: WordPress final URL from Notion database (e.g., https://mikesellsnj.com/actual-permalink/)
+
+    Args:
+        html: HTML content with potential KCM links
+        slug_mapping: Dictionary mapping KCM slugs to WordPress URLs from Notion database
+
+    Returns:
+        Updated HTML with replaced links
     """
+    if slug_mapping is None:
+        slug_mapping = {}
+
     # Pattern to match KCM links
     kcm_pattern = r'https?://www\.simplifyingthemarket\.com/en/\d{4}/\d{2}/\d{2}/([^/?]+)/?(?:\?[^"]*)?'
 
+    replaced_count = 0
+    not_found_count = 0
+
     def replace_link(match):
+        nonlocal replaced_count, not_found_count
         slug = match.group(1)
-        return f'https://mikesellsnj.com/{slug}/'
+
+        # Look up slug in Notion database
+        if slug in slug_mapping:
+            wp_url = slug_mapping[slug]
+            logger.info(f"✅ Replaced simplifyingthemarket.com link: {slug} -> {wp_url}")
+            replaced_count += 1
+            return wp_url
+        else:
+            # Fallback to simple slug-based URL if not in database
+            fallback_url = f'https://mikesellsnj.com/{slug}/'
+            logger.warning(f"⚠️  Slug '{slug}' not found in Notion database - using fallback: {fallback_url}")
+            not_found_count += 1
+            return fallback_url
 
     modified_html = re.sub(kcm_pattern, replace_link, html)
 
-    # Count migrations
-    count = len(re.findall(kcm_pattern, html))
-    if count > 0:
-        logger.info(f"Migrated {count} KCM links to MSNJ format")
+    # Log summary
+    total_count = replaced_count + not_found_count
+    if total_count > 0:
+        logger.info(f"Migrated {total_count} simplifyingthemarket.com links ({replaced_count} from database, {not_found_count} fallback)")
 
     return modified_html
 
@@ -769,9 +795,12 @@ Return ONLY valid JSON with these exact keys:
         }
 
 
-def rewrite_blog_post(original_html: str, context_pages: List[Dict]) -> str:
+def rewrite_blog_post(original_html: str, context_pages: List[Dict], slug_mapping: Dict[str, str] = None) -> str:
     """Use Claude to rewrite the blog post with local South Jersey context"""
     logger.info("Retrieving content from selected pages...")
+
+    if slug_mapping is None:
+        slug_mapping = {}
 
     # Retrieve full content from each page
     context_docs = []
@@ -903,8 +932,8 @@ OUTPUT: Return ONLY the rewritten HTML. No preamble, no explanation, no code fen
         # Remove any remaining em dashes
         rewritten_html = remove_em_dashes(rewritten_html)
 
-        # Migrate KCM links to MSNJ format
-        rewritten_html = migrate_kcm_links(rewritten_html)
+        # Migrate KCM links to MSNJ format (using Notion database slug lookups)
+        rewritten_html = migrate_kcm_links(rewritten_html, slug_mapping)
 
         # Note: Image URL conversion will happen after images are uploaded to WordPress
         # This ensures we use the actual WordPress URLs with SEO-optimized filenames
@@ -949,8 +978,12 @@ def convert():
         if not relevant_pages:
             return jsonify({'error': 'No relevant context found in Notion database'}), 500
 
+        # Get slug mappings for simplifyingthemarket.com link replacement
+        logger.info("Loading slug mappings from Notion for simplifyingthemarket.com links...")
+        slug_mapping = get_slug_mappings(notion_client)
+
         # Rewrite blog post
-        converted_html = rewrite_blog_post(original_html, relevant_pages)
+        converted_html = rewrite_blog_post(original_html, relevant_pages, slug_mapping)
 
         if not converted_html:
             return jsonify({'error': 'Conversion failed'}), 500
