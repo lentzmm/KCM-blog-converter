@@ -68,6 +68,66 @@ def get_url_mappings(notion_client) -> Dict[str, str]:
         return {}
 
 
+def get_slug_mappings(notion_client) -> Dict[str, str]:
+    """
+    Query Notion conversion database and return KCM Slug -> WordPress URL mapping
+    This is used for simplifyingthemarket.com URLs where we need to look up by slug
+
+    Args:
+        notion_client: Authenticated Notion client
+
+    Returns:
+        Dictionary mapping KCM slugs to WordPress URLs
+    """
+    conversion_db_id = os.getenv('NOTION_CONVERSION_DB_ID')
+
+    if not conversion_db_id:
+        logger.warning("NOTION_CONVERSION_DB_ID not set - slug-based link replacement disabled")
+        return {}
+
+    try:
+        # Query all pages in conversion database
+        response = notion_client.databases.query(
+            database_id=conversion_db_id,
+            filter={
+                "and": [
+                    {
+                        "property": "Status",
+                        "select": {
+                            "equals": "Published"
+                        }
+                    }
+                ]
+            }
+        )
+
+        slug_mapping = {}
+
+        for page in response.get('results', []):
+            props = page.get('properties', {})
+
+            # Extract KCM Slug
+            kcm_slug_prop = props.get('KCM Slug', {})
+            kcm_slug = None
+            if kcm_slug_prop.get('rich_text') and len(kcm_slug_prop['rich_text']) > 0:
+                kcm_slug = kcm_slug_prop['rich_text'][0]['text']['content']
+
+            # Extract WordPress URL
+            wp_url_prop = props.get('WordPress URL', {})
+            wp_url = wp_url_prop.get('url')
+
+            if kcm_slug and wp_url:
+                slug_mapping[kcm_slug] = wp_url
+                logger.info(f"Slug mapped: {kcm_slug} -> {wp_url}")
+
+        logger.info(f"Loaded {len(slug_mapping)} slug mappings from Notion")
+        return slug_mapping
+
+    except Exception as e:
+        logger.error(f"Failed to load slug mappings from Notion: {e}")
+        return {}
+
+
 def add_conversion_record(
     notion_client,
     kcm_url: str,
